@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WerkstattPuls — Alpine AutoHaus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    /* ═══ VARIABLES ═══════════════════════════════════════════════════════ */
+    :root {
+      --primary:    #1E4D35;
+      --accent:     #2D5E3F;
+      --accent-dim: rgba(45,94,63,0.10);
+      --header-bg:  #1A1A1A;
+      --bg:         #dcd7cb;
+      --bg-card:    #dcd7cb;
+      --bg-section: #dcd7cb;
+      --bg-input:   #dcd7cb;
+      --text:       #141410;
+      --text-muted: #9A9590;
+      --border:     #C8C8C8;
+      --shadow:     rgba(200,200,200,0.55);
+    }
+
+    [data-theme="dark"] {
+      --primary:    #2D5E3F;
+      --accent:     #3A7A52;
+      --accent-dim: rgba(45,94,63,0.20);
+      --header-bg:  #0F0F0F;
+      --bg:         #141410;
+      --bg-card:    #1A1A18;
+      --bg-section: #1A1A18;
+      --bg-input:   #222220;
+      --text:       #dcd7cb;
+      --text-muted: #7A7770;
+      --border:     #333330;
+      --shadow:     rgba(0,0,0,0.55);
+    }
+
+    /* ═══ RESET ═══════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ═══ LOADING ═════════════════════════════════════════════════════════ */
+    #loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; gap: 1rem;
+      background: #1A1A1A; color: #2D5E3F;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid rgba(45,94,63,0.20);
+      border-top-color: #2D5E3F; border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading strong { font-size: 1.1rem; color: #dcd7cb; letter-spacing: 0.5px; }
+    #loading p { font-size: 0.85rem; color: #9A9590; }
+
+    /* ═══ ERROR ═══════════════════════════════════════════════════════════ */
+    #error-state {
+      display: none; min-height: 100vh; background: #1A1A1A;
+      align-items: center; justify-content: center; padding: 2rem;
+    }
+    .error-card {
+      background: #dcd7cb; border-radius: 8px; padding: 2.5rem;
+      max-width: 600px; width: 100%; border-top: 4px solid #1E4D35;
+      box-shadow: 0 4px 24px rgba(200,200,200,0.4);
+    }
+    .error-card h2 { color: #6a6b5d; margin-bottom: 0.75rem; font-size: 1.2rem; }
+    .error-card p  { color: #141410; line-height: 1.7; margin-bottom: 1rem; font-size: 0.95rem; }
+    .code-block {
+      background: #1A1A1A; color: #dcd7cb; border-radius: 4px;
+      padding: 0.7rem 1rem; font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.875rem; margin: 0.5rem 0;
+    }
+
+    /* ═══ APP ═════════════════════════════════════════════════════════════ */
+    #app { display: none; position: relative; z-index: 1; }
+
+    /* ═══ STICKY TOP ══════════════════════════════════════════════════════ */
+    .sticky-top { position: sticky; top: 0; z-index: 100; }
+
+    /* ═══ HEADER ══════════════════════════════════════════════════════════ */
+    header {
+      background: var(--header-bg);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    .header-inner {
+      position: relative; z-index: 1;
+      padding: 1.1rem 2rem;
+      display: flex; align-items: center; gap: 1.25rem;
+      min-height: 72px;
+    }
+    .header-car {
+      position: fixed; right: 0; bottom: 0;
+      height: 78vh; width: auto; max-width: 62vw;
+      object-fit: contain; object-position: right bottom;
+      opacity: 0.28;
+      z-index: 0;
+      mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 28%, black 62%),
+                  linear-gradient(to top,   black 60%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 28%, black 62%);
+      mask-composite: intersect;
+      -webkit-mask-composite: source-in;
+      pointer-events: none; user-select: none;
+    }
+    .header-logo {
+      width: 44px; height: 44px; flex-shrink: 0;
+      background: #1E4D35;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .header-brand { flex: 1; min-width: 0; }
+    .header-brand h1 {
+      font-size: 1.2rem; font-weight: 700; color: #fff;
+      letter-spacing: 0.2px; line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .header-brand h1 span { color: #B5794B; }
+    .header-brand p { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem; }
+    .header-controls { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+    .lang-btn, .theme-btn {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(232,220,200,0.75); border-radius: 6px;
+      padding: 0.35rem 0.7rem; font-size: 0.78rem; cursor: pointer;
+      transition: all 0.18s; font-family: inherit; font-weight: 600;
+    }
+    .lang-btn:hover, .theme-btn:hover {
+      background: rgba(45,94,63,0.18); border-color: #2D5E3F; color: #2D5E3F;
+    }
+    .lang-btn.active {
+      background: rgba(30,77,53,0.22); border-color: #1E4D35; color: #dcd7cb;
+    }
+
+    /* ═══ FILTER BAR ══════════════════════════════════════════════════════ */
+    .filter-bar {
+      background: var(--bg-card); border-bottom: 1px solid var(--border);
+      padding: 0.6rem 2rem; display: flex; align-items: center;
+      gap: 0.5rem; flex-wrap: wrap;
+    }
+    .filter-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--text-muted); white-space: nowrap;
+    }
+    .btn-ghost {
+      background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+      border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.8rem;
+      cursor: pointer; font-family: inherit; transition: all 0.18s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    #cf-bar {
+      display: none; align-items: center; gap: 0.5rem;
+      background: rgba(181,121,75,0.12); border: 1px solid #B5794B;
+      border-radius: 6px; padding: 0.25rem 0.7rem;
+      font-size: 0.78rem; color: #B5794B;
+    }
+    #cf-bar button {
+      background: none; border: none; color: #B5794B;
+      cursor: pointer; font-size: 0.9rem; padding: 0 0.1rem; line-height: 1;
+    }
+    .filter-source {
+      margin-left: auto; font-size: 0.68rem; color: var(--text-muted); opacity: 0.55;
+    }
+    /* Multi-select dropdown */
+    .ms-wrap { position: relative; display: inline-block; }
+    .ms-btn {
+      background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
+      border-radius: 5px; padding: 0.28rem 0.6rem; font-size: 0.78rem;
+      font-family: inherit; cursor: pointer; display: flex; align-items: center;
+      gap: 0.3rem; white-space: nowrap; transition: border-color 0.2s;
+      min-width: 90px;
+    }
+    .ms-btn:hover, .ms-btn.open { border-color: var(--primary); }
+    .ms-btn .ms-arrow { font-size: 0.55rem; opacity: 0.5; margin-left: auto; }
+    .ms-btn .ms-count {
+      background: var(--primary); color: #dcd7cb; border-radius: 3px;
+      padding: 0 0.35rem; font-size: 0.65rem; font-weight: 700; line-height: 1.4;
+    }
+    .ms-drop {
+      display: none; position: absolute; top: 100%; left: 0; z-index: 200;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 6px; box-shadow: 0 6px 20px var(--shadow);
+      min-width: 180px; max-height: 260px; overflow-y: auto;
+      margin-top: 4px; padding: 0.3rem 0;
+    }
+    .ms-drop.show { display: block; }
+    .ms-drop label {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.35rem 0.8rem; font-size: 0.8rem; cursor: pointer;
+      transition: background 0.12s; color: var(--text);
+    }
+    .ms-drop label:hover { background: var(--accent-dim); }
+    .ms-drop input[type="checkbox"] { accent-color: var(--primary); flex-shrink: 0; }
+
+    /* ═══ MAIN ════════════════════════════════════════════════════════════ */
+    main { max-width: 1440px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+    /* ═══ KPI GRID ════════════════════════════════════════════════════════ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .kpi-card {
+      background: var(--bg-card); border-radius: 8px;
+      padding: 1.1rem 1.4rem; border-left: 4px solid var(--primary);
+      box-shadow: 0 1px 0 var(--border), 0 2px 8px var(--shadow);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 1px 0 var(--border), 0 6px 18px var(--shadow); }
+    .kpi-card.c-accent { border-left-color: #B5794B; }
+    .kpi-card.c-warn   { border-left-color: #B5794B; }
+    .kpi-card.c-blue   { border-left-color: #2D5E3F; }
+    .kpi-card.c-black  { border-left-color: #141410; }
+    .kpi-card.c-orange { border-left-color: #B5794B; }
+    .kpi-card.c-green  { border-left-color: #2D5E3F; }
+    .kpi-card.c-gray   { border-left-color: #9A9590; }
+    .kpi-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.7px; color: var(--text-muted); margin-bottom: 0.35rem;
+    }
+    .kpi-value {
+      font-size: 1.65rem; font-weight: 800; color: var(--text);
+      line-height: 1; margin-bottom: 0.25rem;
+    }
+    .kpi-card.c-accent .kpi-value { color: #B5794B; }
+    .kpi-sub { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* ═══ SECTIONS ════════════════════════════════════════════════════════ */
+    .dash-section {
+      background: var(--bg-section); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.9rem 1.5rem; cursor: pointer; user-select: none;
+      transition: background 0.15s; border-bottom: 1px solid var(--border);
+    }
+    .section-header:hover { background: rgba(45,94,63,0.06); }
+    .section-filters {
+      display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 1.5rem;
+      border-bottom: 1px solid var(--border); background: var(--accent-dim);
+    }
+    .section-icon { font-size: 1.1rem; width: 28px; text-align: center; flex-shrink: 0; }
+    .section-title { flex: 1; }
+    .section-title h2 { font-size: 0.97rem; font-weight: 700; color: #6a6b5d; }
+    .section-title p  { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.08rem; }
+    .section-chevron { color: var(--text-muted); font-size: 0.75rem; transition: transform 0.22s; }
+    .dash-section.collapsed .section-chevron { transform: rotate(-90deg); }
+    .section-body { padding: 1.4rem; }
+    .dash-section.collapsed .section-body { display: none; }
+    .dash-section.collapsed .section-filters { display: none; }
+
+    /* ═══ PILL FILTERS (Jahr/Monat) ═══════════════════════════════════════ */
+    .pill-filter { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+    .pill-filter-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--text-muted); white-space: nowrap; margin-right: 0.2rem;
+    }
+    .pill-btn {
+      background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
+      border-radius: 5px; padding: 0.22rem 0.55rem; font-size: 0.78rem;
+      font-family: inherit; cursor: pointer; transition: all 0.15s; user-select: none;
+    }
+    .pill-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .pill-btn.active {
+      background: var(--primary); color: #dcd7cb; border-color: var(--primary);
+    }
+    .pill-btn.all { font-weight: 700; }
+
+    /* Section-colored filters */
+    .sec-orange .pill-btn.active { background: #B5794B; border-color: #B5794B; color: #fff; }
+    .sec-orange .pill-btn:hover { border-color: #B5794B; color: #B5794B; }
+    .sec-orange .time-toggle button.active { background: #B5794B; border-color: #B5794B; color: #fff; }
+    .sec-orange .time-toggle button:hover { border-color: #B5794B; color: #B5794B; }
+    .sec-orange .ms-btn:hover, .sec-orange .ms-btn.open { border-color: #B5794B; }
+    .sec-orange .ms-btn .ms-count { background: #B5794B; }
+    .sec-orange .ms-drop label:hover { background: rgba(181,121,75,0.12); }
+    .sec-orange .ms-drop input[type="checkbox"] { accent-color: #B5794B; }
+    .sec-green .pill-btn.active { background: #2D5E3F; border-color: #2D5E3F; color: #fff; }
+    .sec-green .pill-btn:hover { border-color: #2D5E3F; color: #2D5E3F; }
+    .sec-green .time-toggle button.active { background: #2D5E3F; border-color: #2D5E3F; color: #fff; }
+    .sec-green .time-toggle button:hover { border-color: #2D5E3F; color: #2D5E3F; }
+    .sec-green .ms-btn:hover, .sec-green .ms-btn.open { border-color: #2D5E3F; }
+    .sec-green .ms-btn .ms-count { background: #2D5E3F; }
+    .sec-gray .pill-btn.active { background: #9A9590; border-color: #9A9590; color: #fff; }
+    .sec-gray .pill-btn:hover { border-color: #9A9590; color: #9A9590; }
+    .sec-gray .time-toggle button.active { background: #9A9590; border-color: #9A9590; color: #fff; }
+    .sec-gray .time-toggle button:hover { border-color: #9A9590; color: #9A9590; }
+    .sec-gray .ms-btn:hover, .sec-gray .ms-btn.open { border-color: #9A9590; }
+    .sec-gray .ms-btn .ms-count { background: #9A9590; }
+
+    /* ═══ CHART GRID ══════════════════════════════════════════════════════ */
+    .charts-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-bottom: 1.1rem; }
+    .charts-1 { display: grid; grid-template-columns: 1fr; gap: 1.1rem; margin-bottom: 1.1rem; }
+    .chart-card {
+      background: var(--bg-card); border-radius: 8px; border: none;
+      padding: 1.2rem; box-shadow: none;
+    }
+    .chart-card h3 { font-size: 0.88rem; font-weight: 700; color: #6a6b5d; margin-bottom: 0.15rem; }
+    .chart-sub { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.9rem; }
+    .chart-wrap { position: relative; height: 255px; }
+    .chart-hint { font-size: 0.65rem; color: var(--text-muted); text-align: right; margin-top: 0.35rem; opacity: 0.65; }
+    .time-toggle {
+      display: flex; gap: 0.25rem; margin-bottom: 0.5rem; justify-content: flex-start;
+    }
+    .time-toggle button {
+      background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted);
+      border-radius: 4px; padding: 0.15rem 0.5rem; font-size: 0.7rem;
+      font-family: inherit; cursor: pointer; transition: all 0.15s;
+    }
+    .time-toggle button:hover { border-color: var(--primary); color: var(--primary); }
+    .time-toggle button.active { background: var(--primary); color: #dcd7cb; border-color: var(--primary); }
+
+    /* ═══ CUSTOM TOOLTIP ═══════════════════════════════════════════════════ */
+    .custom-tooltip {
+      position: absolute; pointer-events: none; z-index: 300;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.8rem 1rem;
+      box-shadow: 0 4px 16px var(--shadow);
+      font-family: 'Inter', system-ui, sans-serif;
+      min-width: 300px; max-width: 400px;
+      transition: opacity 0.15s;
+    }
+    .custom-tooltip .ct-title {
+      font-size: 0.85rem; font-weight: 700; color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+    .custom-tooltip .ct-total {
+      font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.6rem;
+    }
+    .custom-tooltip .ct-bar-row {
+      display: flex; align-items: center; gap: 0.4rem;
+      margin-bottom: 0.3rem; font-size: 0.72rem; color: var(--text);
+    }
+    .custom-tooltip .ct-bar-label {
+      width: 70px; text-align: right; flex-shrink: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .custom-tooltip .ct-bar-track {
+      flex: 1; height: 18px; background: var(--border); border-radius: 3px; overflow: hidden;
+    }
+    .custom-tooltip .ct-bar-fill {
+      height: 100%; border-radius: 3px; transition: width 0.2s; display:flex; align-items:center;
+    }
+    }
+
+    /* ═══ TABLES ══════════════════════════════════════════════════════════ */
+    .table-card {
+      background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border);
+      box-shadow: 0 2px 8px var(--shadow); overflow-x: auto; margin-top: 1.1rem;
+    }
+    .table-card-title {
+      padding: 0.9rem 1.2rem 0.4rem; font-size: 0.88rem;
+      font-weight: 700; color: #6a6b5d;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    thead tr { background: rgba(200,200,200,0.35); }
+    th {
+      padding: 0.6rem 0.9rem; text-align: left;
+      font-size: 0.67rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-muted);
+      border-bottom: 2px solid var(--border); white-space: nowrap;
+    }
+    td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); color: var(--text); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr { cursor: pointer; transition: background 0.12s; }
+    tbody tr:hover td { background: var(--accent-dim); }
+    .badge {
+      display: inline-block; padding: 0.14rem 0.5rem;
+      border-radius: 12px; font-size: 0.68rem; font-weight: 700; white-space: nowrap;
+    }
+    .b-green  { background: rgba(45,94,63,0.14);  color: #2D5E3F; }
+    .b-yellow { background: rgba(181,121,75,0.16); color: #B5794B; }
+    .b-red    { background: rgba(180,30,30,0.12);  color: #b41e1e; }
+    .b-gray   { background: rgba(154,149,144,0.14); color: var(--text-muted); }
+
+    /* ═══ FOOTER ══════════════════════════════════════════════════════════ */
+    footer {
+      background: var(--header-bg); color: rgba(220,215,203,0.45);
+      padding: 1rem 2rem; font-size: 0.76rem;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 0.5rem;
+    }
+    footer a { color: rgba(181,121,75,0.75); text-decoration: none; }
+    footer a:hover { color: #B5794B; }
+    footer .ft-accent { color: rgba(181,121,75,0.8); }
+
+    /* ═══ RESPONSIVE ══════════════════════════════════════════════════════ */
+    /* ═══ RESPONSIVE ══════════════════════════════════════════════════════ */
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .header-car { max-width: 45vw; opacity: 0.18; }
+    }
+    @media (max-width: 860px) {
+      .charts-2 { grid-template-columns: 1fr; }
+      .kpi-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+      main { padding: 1rem; }
+      .filter-bar { padding: 0.6rem 1rem; }
+      .header-inner { padding: 0.9rem 1rem; }
+      .section-filters { flex-wrap: wrap; gap: 0.4rem; padding: 0.6rem 1rem; }
+      .section-filters .pill-filter { margin-left: 0 !important; }
+      .section-body { padding: 0.8rem; }
+      .chart-card { padding: 0.8rem; }
+      .chart-wrap { height: 220px; }
+      .header-car { max-width: 35vw; opacity: 0.12; }
+      .time-toggle { flex-wrap: wrap; }
+      .custom-tooltip { min-width: 220px; max-width: 280px; }
+    }
+    @media (max-width: 640px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 0.6rem; }
+      .kpi-value { font-size: 1.3rem; }
+      .kpi-card { padding: 0.8rem 1rem; }
+      .header-brand h1 { font-size: 1rem; }
+      .header-brand h1 span { display: none; }
+      .header-brand p { display: none; }
+      .header-controls { gap: 0.3rem; }
+      .lang-btn, .theme-btn { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+      .filter-bar { padding: 0.5rem 0.8rem; gap: 0.3rem; }
+      .pill-btn { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
+      .pill-filter-label { font-size: 0.65rem; }
+      .section-header h2 { font-size: 1rem; }
+      .section-header p { font-size: 0.7rem; }
+      .chart-card h3 { font-size: 0.8rem; }
+      .chart-wrap { height: 200px; }
+      .btn-ghost { padding: 0.2rem 0.5rem; font-size: 0.7rem; }
+      main { padding: 0.6rem; }
+      .dash-section { margin-bottom: 0.8rem; }
+      .header-car { display: none; }
+      .ms-drop { max-height: 250px; min-width: 180px; }
+    }
+    @media (max-width: 380px) {
+      .kpi-grid { grid-template-columns: 1fr !important; }
+      .kpi-value { font-size: 1.15rem; }
+      .header-inner { padding: 0.6rem 0.8rem; min-height: 50px; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .chart-wrap { height: 180px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <strong>Alpine AutoHaus</strong>
+  <p id="load-msg">Lade autogarage_100k.xlsx …</p>
+</div>
+
+<!-- ERROR -->
+<div id="error-state">
+  <div class="error-card">
+    <h2>⚠️ Datei kann nicht geladen werden</h2>
+    <p>Browser blockieren direkten Dateizugriff. Bitte lokalen Webserver starten:</p>
+    <div class="code-block">python -m http.server 8000</div>
+    <p>Dann im Browser öffnen:</p>
+    <div class="code-block">http://localhost:8000/dashboard.html</div>
+    <p style="margin-top:1rem;">💡 <strong>Shortcut:</strong> Doppelklick auf <code>start.bat</code> — erledigt alles automatisch.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<div class="custom-tooltip" id="brandTooltip" style="opacity:0;"></div>
+
+  <!-- STICKY TOP: HEADER + FILTER BAR -->
+  <div class="sticky-top">
+    <header>
+      <div class="header-inner">
+        <div class="header-brand">
+          <h1>WerkstattPuls <span>— Alpine AutoHaus</span></h1>
+          <p data-t="subtitle">Ihr Geschäft auf einen Blick</p>
+        </div>
+        <div class="header-controls">
+          <button class="lang-btn active" onclick="setLang('de')">DE</button>
+          <button class="lang-btn" onclick="setLang('fr')">FR</button>
+          <button class="lang-btn" onclick="setLang('en')">EN</button>
+          <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙 Dunkel</button>
+        </div>
+      </div>
+      <img src="porsche.jpg" class="header-car" alt="" />
+    </header>
+
+    <div class="filter-bar">
+      <div class="pill-filter">
+        <span class="pill-filter-label">Jahr</span>
+        <div id="fw-jahr"></div>
+      </div>
+      <div class="pill-filter" style="margin-left:0.5rem;">
+        <span class="pill-filter-label">Monat</span>
+        <div id="fw-monat"></div>
+      </div>
+      <button class="btn-ghost" style="margin-left:auto;" onclick="resetAllFilters()">✕ Zurücksetzen</button>
+      <button class="btn-ghost" onclick="exportPDF()" style="font-size:0.75rem;">⬇ PDF</button>
+      <button class="btn-ghost" onclick="exportPPTX()" style="font-size:0.75rem;">⬇ PPTX</button>
+      <div id="cf-bar">
+        <span id="cf-text"></span>
+        <button onclick="clearCF()">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi-card c-black">
+        <div class="kpi-label">Gesamtumsatz</div>
+        <div class="kpi-value" id="v-total">—</div>
+        <div class="kpi-sub" id="s-total">—</div>
+      </div>
+      <div class="kpi-card c-green">
+        <div class="kpi-label">Fahrzeughandel</div>
+        <div class="kpi-value" id="v-handel">—</div>
+        <div class="kpi-sub" id="s-handel">—</div>
+      </div>
+      <div class="kpi-card c-orange">
+        <div class="kpi-label">Werkstatt &amp; Service</div>
+        <div class="kpi-value" id="v-svc">—</div>
+        <div class="kpi-sub" id="s-svc">—</div>
+      </div>
+      <div class="kpi-card c-gray">
+        <div class="kpi-label">Autowaschanlage</div>
+        <div class="kpi-value" id="v-wash">—</div>
+        <div class="kpi-sub" id="s-wash">—</div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: ÜBERSICHT ─────────────────────────────────────────── -->
+    <div class="dash-section collapsed" id="sec-overview">
+      <div class="section-header" onclick="toggleSec('sec-overview')">
+        
+        <div class="section-title">
+          <h2 data-t="sec_overview">Übersicht</h2>
+          <p>Umsatz und Marge im Überblick</p>
+        </div>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="overview-time-toggle"></div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3>Gesamtumsatz</h3>
+            <p class="chart-sub">Monatlicher Umsatz alle Bereiche</p>
+            <div class="chart-wrap"><canvas id="overviewTotalChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3>Gesamtmarge %</h3>
+            <p class="chart-sub">Monatliche Marge in % alle Bereiche</p>
+            <div class="chart-wrap"><canvas id="overviewMargeChart"></canvas></div>
+          </div>
+        </div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3>Umsatz nach Bereich</h3>
+            <p class="chart-sub">Werkstatt · Fahrzeughandel · Waschanlage</p>
+            <div class="chart-wrap"><canvas id="overviewBereichChart"></canvas></div>
+            <div class="chart-hint">Klick auf Legende zum Ein-/Ausblenden</div>
+          </div>
+          <div class="chart-card">
+            <h3>Marge nach Bereich %</h3>
+            <p class="chart-sub">Werkstatt · Fahrzeughandel · Waschanlage</p>
+            <div class="chart-wrap"><canvas id="overviewBereichMargeChart"></canvas></div>
+            <div class="chart-hint">Klick auf Legende zum Ein-/Ausblenden</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: FAHRZEUGHANDEL ────────────────────────────────────── -->
+    <div class="dash-section collapsed sec-green" id="sec-handel">
+      <div class="section-header" onclick="toggleSec('sec-handel')">
+        
+        <div class="section-title">
+          <h2 data-t="sec_handel">Fahrzeughandel</h2>
+          <p data-t="sec_handel_sub">An- &amp; Verkauf, Margen, Verkäufer, Zustand</p>
+        </div>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label">Kennzahl</span><div id="fw-handel-measure"><button class="pill-btn active" onclick="setHandelMeasure('marge',this)">Marge</button><button class="pill-btn" onclick="setHandelMeasure('umsatz',this)">Umsatz</button></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Zahlung</span><div class="ms-wrap" id="fw-zahlung"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Zustand</span><div class="ms-wrap" id="fw-zustand"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Marke</span><div class="ms-wrap" id="fw-handel-marke"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Modell</span><div class="ms-wrap" id="fw-handel-modell"></div></div></div>
+      <div class="section-body">
+        <div class="handel-time-toggle"></div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3 id="marginChartTitle">Marge in CHF und %</h3>
+            
+            <div class="chart-wrap"><canvas id="marginChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3 data-t="ch_pay_handel">Zahlungsarten (Handel)</h3>
+            
+            <div class="chart-wrap"><canvas id="payHandelChart"></canvas></div>
+          </div>
+        </div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3 id="brandChartTitle">Top Marken — Marge</h3>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem;">
+              <div class="time-toggle" id="brandTopN-toggle">
+                <button onclick="setBrandTopN(0)">Alle</button>
+                <button class="active" onclick="setBrandTopN(5)">Top 5</button>
+                <button onclick="setBrandTopN(10)">Top 10</button>
+                <button onclick="setBrandTopN(20)">Top 20</button>
+              </div>
+              <div class="time-toggle" id="brandMeasure-toggle">
+                <button class="active" onclick="setBrandMeasure('chf')">CHF</button>
+                <button onclick="setBrandMeasure('pct')">%</button>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="brandHandelChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3 data-t="ch_condition">Fahrzeugzustand</h3>
+            
+            <div class="chart-wrap"><canvas id="conditionChart"></canvas></div>
+          </div>
+        </div>
+        <div style="padding:0.8rem 0; text-align:left;">
+          <button class="btn-ghost" onclick="exportXLSX('handel')" style="font-size:0.8rem;">⬇ Fahrzeughandel-Daten als XLSX exportieren</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: WERKSTATT ─────────────────────────────────────────── -->
+    <div class="dash-section collapsed sec-orange" id="sec-werkstatt">
+      <div class="section-header" onclick="toggleSec('sec-werkstatt')">
+        
+        <div class="section-title">
+          <h2 data-t="sec_werkstatt">Werkstatt &amp; Service</h2>
+          <p data-t="sec_werkstatt_sub">Aufträge, Mechaniker, Leistungsarten, Status</p>
+        </div>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label">Kennzahl</span><div id="fw-svc-measure"><button class="pill-btn active" onclick="setSvcMeasure('umsatz',this)">Umsatz</button><button class="pill-btn" onclick="setSvcMeasure('marge',this)">Marge</button></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Leistung</span><div class="ms-wrap" id="fw-leistung"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Status</span><div class="ms-wrap" id="fw-svc-status"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Mechaniker</span><div class="ms-wrap" id="fw-svc-mechaniker"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Marke</span><div class="ms-wrap" id="fw-svc-marke"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Modell</span><div class="ms-wrap" id="fw-svc-modell"></div></div></div>
+      <div class="section-body">
+        <div class="werkstatt-time-toggle"></div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3 id="svcLineTitle">Umsatz in CHF</h3>
+            
+            <div class="chart-wrap"><canvas id="svcLineChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3 data-t="ch_svc_type">Leistungsarten</h3>
+            
+            <div class="chart-wrap"><canvas id="svcTypeChart"></canvas></div>
+          </div>
+        </div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3 id="mechChartTitle">Top Mechaniker — Umsatz</h3>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem;">
+              <div class="time-toggle" id="mechTopN-toggle">
+                <button onclick="setMechTopN(0)">Alle</button>
+                <button class="active" onclick="setMechTopN(5)">Top 5</button>
+                <button onclick="setMechTopN(10)">Top 10</button>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="mechanicChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3 data-t="ch_status">Auftragsstatus</h3>
+            
+            <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
+          </div>
+        </div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3 id="svcBrandChartTitle">Top Marken — Umsatz</h3>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem;">
+              <div class="time-toggle" id="svcBrandTopN-toggle">
+                <button onclick="setSvcBrandTopN(0)">Alle</button>
+                <button class="active" onclick="setSvcBrandTopN(5)">Top 5</button>
+                <button onclick="setSvcBrandTopN(10)">Top 10</button>
+                <button onclick="setSvcBrandTopN(20)">Top 20</button>
+              </div>
+              <div class="time-toggle" id="svcBrandMeasure-toggle">
+                <button class="active" onclick="setSvcBrandMeasure('chf')">CHF</button>
+                <button onclick="setSvcBrandMeasure('pct')">%</button>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="svcBrandChart"></canvas></div>
+          </div>
+          <div class="chart-card" style="display:flex; align-items:center; justify-content:center;">
+          </div>
+        </div>
+        <div style="padding:0.8rem 0; text-align:left;">
+          <button class="btn-ghost" onclick="exportXLSX('werkstatt')" style="font-size:0.8rem;">⬇ Werkstatt-Daten als XLSX exportieren</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: WASCHANLAGE ───────────────────────────────────────── -->
+    <div class="dash-section collapsed sec-gray" id="sec-wash">
+      <div class="section-header" onclick="toggleSec('sec-wash')">
+        
+        <div class="section-title">
+          <h2 data-t="sec_wash">Autowaschanlage</h2>
+          <p data-t="sec_wash_sub">Programme, Umsatz, Zahlungsarten, Zusatzleistungen</p>
+        </div>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label">Programm</span><div class="ms-wrap" id="fw-waschprog"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Zusatz</span><div class="ms-wrap" id="fw-zusatz"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Zahlung</span><div class="ms-wrap" id="fw-wash-zahlung"></div></div></div>
+      <div class="section-body">
+        <div class="wash-time-toggle"></div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3 id="washLineTitle">Umsatz in CHF</h3>
+            
+            <div class="chart-wrap"><canvas id="washMonthlyChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3>Waschprogramme</h3>
+            
+            <div class="chart-wrap"><canvas id="washProgChart"></canvas></div>
+          </div>
+        </div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3>Zusatzleistungen</h3>
+            
+            <div class="chart-wrap"><canvas id="washExtraChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3>Zahlungsarten</h3>
+            
+            <div class="chart-wrap"><canvas id="washPayChart"></canvas></div>
+          </div>
+        </div>
+        <div class="charts-2">
+          <div class="chart-card">
+            <h3>Top Programme — Umsatz</h3>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem;">
+              <div class="time-toggle" id="washProgTopN-toggle">
+                <button onclick="setWashProgTopN(0)">Alle</button>
+                <button class="active" onclick="setWashProgTopN(5)">Top 5</button>
+                <button onclick="setWashProgTopN(10)">Top 10</button>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="washProgBarChart"></canvas></div>
+          </div>
+          <div class="chart-card"></div>
+        </div>
+        <div style="padding:0.8rem 0; text-align:left;">
+          <button class="btn-ghost" onclick="exportXLSX('waschanlage')" style="font-size:0.8rem;">⬇ Waschanlage-Daten als XLSX exportieren</button>
+        
+        </div>
+      </div>
+    </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>© 2026 <span class="ft-accent">Alpine AutoHaus</span> &nbsp;·&nbsp; <span data-t="ft_powered">Betrieben von WerkstattPuls</span></div>
+    <div>
+      <span data-t="ft_source">Datenquelle:</span>
+      <a href="autogarage_100k.xlsx">autogarage_100k.xlsx</a>
+      &nbsp;·&nbsp; <span id="ft-rows"></span>
+      &nbsp;·&nbsp; <span data-t="ft_refresh">Auto-Aktualisierung alle 30s</span>
+    </div>
+  </footer>
+
+</div><!-- #app -->
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SCRIPT
+══════════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ── TRANSLATIONS ──────────────────────────────────────────────────────────
+const TR = {
+  de: {
+    subtitle:'Ihr Geschäft auf einen Blick',
+    from:'Von', to:'Bis', apply:'Anwenden', reset:'Zurücksetzen',
+    kpi_total:'Gesamtumsatz', kpi_svc:'Werkstatt',
+    kpi_handel:'Fahrzeughandel Marge', kpi_wash:'Waschanlage', kpi_open:'Offene Aufträge',
+    sec_overview:'Umsatzübersicht', sec_overview_sub:'Monatlicher Umsatz aller Bereiche',
+    sec_werkstatt:'Werkstatt & Service', sec_werkstatt_sub:'Aufträge, Mechaniker, Leistungsarten, Status',
+    sec_handel:'Fahrzeughandel', sec_handel_sub:'An- & Verkauf, Margen, Verkäufer, Zustand',
+    sec_wash:'Autowaschanlage', sec_wash_sub:'Programme, Umsatz, Zahlungsarten, Zusatzleistungen',
+    ch_overview:'Monatlicher Umsatz — alle Bereiche', ch_overview_sub:'Werkstatt · Fahrzeughandel · Waschanlage',
+    ch_mechanic:'Top Mechaniker', ch_mechanic_sub:'Gesamterlös · Klick zum Filtern',
+    ch_svc_type:'Leistungsarten', ch_svc_type_sub:'Umsatz nach Servicetyp',
+    ch_brand_svc:'Fahrzeugmarken (Werkstatt)', ch_brand_svc_sub:'Anzahl Aufträge · Klick zum Filtern',
+    ch_status:'Auftragsstatus', ch_status_sub:'Erledigt / Offen / Storniert',
+    ch_margin:'Monatliche Marge', ch_margin_sub:'Verkaufserlös minus Einkaufspreis',
+    ch_pay_handel:'Zahlungsarten (Handel)', ch_pay_handel_sub:'Bar / Finanzierung / Leasing',
+    ch_brand_handel:'Top Marken — Marge', ch_brand_handel_sub:'Marge CHF nach Fahrzeugmarke · Klick zum Filtern',
+    ch_condition:'Fahrzeugzustand', ch_condition_sub:'Sehr gut / Gut / Mittel / Schlecht',
+    ch_wash_monthly:'Monatlicher Umsatz', ch_wash_monthly_sub:'CHF nach Monat',
+    ch_wash_prog:'Waschprogramme', ch_wash_prog_sub:'Basis / Standard / Premium / Deluxe · Klick zum Filtern',
+    ch_wash_extra:'Zusatzleistungen', ch_wash_extra_sub:'Polierung, Innenreinigung, Felgenreinigung',
+    ch_wash_pay:'Zahlungsarten (Waschanlage)', ch_wash_pay_sub:'Bar / Karte / Twint',
+    tbl_svc:'Letzte Aufträge (50)', tbl_handel:'Letzte Transaktionen (50)',
+    hint_click:'Klick auf Legende zum Ein-/Ausblenden',
+    ft_powered:'Betrieben von WerkstattPuls', ft_source:'Datenquelle:', ft_refresh:'Auto-Aktualisierung alle 30s',
+    th_date:'Datum', th_nr:'Nr.', th_customer:'Kunde', th_brand:'Marke', th_model:'Modell',
+    th_service:'Leistung', th_mech:'Mechaniker', th_total:'Total', th_status:'Status',
+    th_type:'Typ', th_km:'KM', th_cond:'Zustand', th_buy:'EK', th_sell:'VK',
+    th_margin:'Marge', th_pay:'Zahlung', th_seller:'Verkäufer',
+    s_done:'Erledigt', s_open:'Offen', s_cancel:'Storniert', s_buy:'Ankauf', s_sell:'Verkauf',
+    cf_prefix:'Aktiver Filter:',
+  },
+  fr: {
+    subtitle:'Votre activité en un coup d\'œil',
+    from:'Du', to:'Au', apply:'Appliquer', reset:'Réinitialiser',
+    kpi_total:'CA Total', kpi_svc:'Atelier',
+    kpi_handel:'Marge Commerce', kpi_wash:'Station lavage', kpi_open:'Ordres ouverts',
+    sec_overview:'Vue d\'ensemble', sec_overview_sub:'CA mensuel de tous les secteurs',
+    sec_werkstatt:'Atelier & Service', sec_werkstatt_sub:'Ordres, mécaniciens, types de service',
+    sec_handel:'Commerce de véhicules', sec_handel_sub:'Achats et ventes, marges, vendeurs',
+    sec_wash:'Station de lavage', sec_wash_sub:'Programmes, CA, modes de paiement',
+    ch_overview:'CA Mensuel — tous secteurs', ch_overview_sub:'Atelier · Commerce · Lavage',
+    ch_mechanic:'Top Mécaniciens', ch_mechanic_sub:'CA total · Cliquer pour filtrer',
+    ch_svc_type:'Types de service', ch_svc_type_sub:'CA par type de service',
+    ch_brand_svc:'Marques (Atelier)', ch_brand_svc_sub:'Nb ordres · Cliquer pour filtrer',
+    ch_status:'Statut des ordres', ch_status_sub:'Terminé / Ouvert / Annulé',
+    ch_margin:'Marge mensuelle', ch_margin_sub:'Prix de vente moins prix d\'achat',
+    ch_pay_handel:'Modes de paiement', ch_pay_handel_sub:'Espèces / Financement / Leasing',
+    ch_brand_handel:'Top marques — Marge', ch_brand_handel_sub:'Marge CHF par marque · Cliquer pour filtrer',
+    ch_condition:'État du véhicule', ch_condition_sub:'Très bon / Bon / Moyen / Mauvais',
+    ch_wash_monthly:'CA mensuel lavage', ch_wash_monthly_sub:'CHF par mois',
+    ch_wash_prog:'Programmes de lavage', ch_wash_prog_sub:'Base / Standard / Premium / Deluxe',
+    ch_wash_extra:'Services supplémentaires', ch_wash_extra_sub:'Polissage, nettoyage intérieur, jantes',
+    ch_wash_pay:'Paiements (lavage)', ch_wash_pay_sub:'Espèces / Carte / Twint',
+    tbl_svc:'Derniers ordres (50)', tbl_handel:'Dernières transactions (50)',
+    hint_click:'Cliquer sur la légende pour afficher/masquer',
+    ft_powered:'Propulsé par WerkstattPuls', ft_source:'Source des données:', ft_refresh:'Mise à jour auto toutes les 30s',
+    th_date:'Date', th_nr:'N°', th_customer:'Client', th_brand:'Marque', th_model:'Modèle',
+    th_service:'Service', th_mech:'Mécanicien', th_total:'Total', th_status:'Statut',
+    th_type:'Type', th_km:'KM', th_cond:'État', th_buy:'PA', th_sell:'PV',
+    th_margin:'Marge', th_pay:'Paiement', th_seller:'Vendeur',
+    s_done:'Terminé', s_open:'Ouvert', s_cancel:'Annulé', s_buy:'Achat', s_sell:'Vente',
+    cf_prefix:'Filtre actif:',
+  },
+  en: {
+    subtitle:'Your business at a glance',
+    from:'From', to:'To', apply:'Apply', reset:'Reset',
+    kpi_total:'Total Revenue', kpi_svc:'Workshop',
+    kpi_handel:'Vehicle Trade Margin', kpi_wash:'Car Wash', kpi_open:'Open Orders',
+    sec_overview:'Revenue Overview', sec_overview_sub:'Combined monthly revenue across all areas',
+    sec_werkstatt:'Workshop & Service', sec_werkstatt_sub:'Orders, mechanics, service types, status',
+    sec_handel:'Vehicle Trade', sec_handel_sub:'Purchases & sales, margins, sellers',
+    sec_wash:'Car Wash', sec_wash_sub:'Programs, revenue, payment methods, extras',
+    ch_overview:'Monthly Revenue — All Areas', ch_overview_sub:'Workshop · Vehicle Trade · Car Wash',
+    ch_mechanic:'Top Mechanics', ch_mechanic_sub:'Total revenue · Click to filter',
+    ch_svc_type:'Service Types', ch_svc_type_sub:'Revenue by service type',
+    ch_brand_svc:'Vehicle Brands (Workshop)', ch_brand_svc_sub:'Order count · Click to filter',
+    ch_status:'Order Status', ch_status_sub:'Done / Open / Cancelled',
+    ch_margin:'Monthly Margin', ch_margin_sub:'Sale price minus purchase price',
+    ch_pay_handel:'Payment Methods', ch_pay_handel_sub:'Cash / Finance / Leasing',
+    ch_brand_handel:'Top Brands — Margin', ch_brand_handel_sub:'Margin CHF by brand · Click to filter',
+    ch_condition:'Vehicle Condition', ch_condition_sub:'Excellent / Good / Fair / Poor',
+    ch_wash_monthly:'Monthly Car Wash Revenue', ch_wash_monthly_sub:'CHF by month',
+    ch_wash_prog:'Wash Programs', ch_wash_prog_sub:'Basic / Standard / Premium / Deluxe',
+    ch_wash_extra:'Extra Services', ch_wash_extra_sub:'Polish, interior cleaning, wheel cleaning',
+    ch_wash_pay:'Payment Methods (Car Wash)', ch_wash_pay_sub:'Cash / Card / Twint',
+    tbl_svc:'Recent Orders (50)', tbl_handel:'Recent Transactions (50)',
+    hint_click:'Click legend to show/hide',
+    ft_powered:'Powered by WerkstattPuls', ft_source:'Data source:', ft_refresh:'Auto-refresh every 30s',
+    th_date:'Date', th_nr:'No.', th_customer:'Customer', th_brand:'Brand', th_model:'Model',
+    th_service:'Service', th_mech:'Mechanic', th_total:'Total', th_status:'Status',
+    th_type:'Type', th_km:'KM', th_cond:'Condition', th_buy:'Buy', th_sell:'Sell',
+    th_margin:'Margin', th_pay:'Payment', th_seller:'Seller',
+    s_done:'Done', s_open:'Open', s_cancel:'Cancelled', s_buy:'Purchase', s_sell:'Sale',
+    cf_prefix:'Active filter:',
+  }
+};
+
+function t(k) { return TR[S.lang][k] || k; }
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+const S = {
+  raw: { svc: [], sales: [], wash: [] },
+  lang: 'de', theme: 'light',
+  dateFrom: null, dateTo: null,
+  cf: null,  // cross-filter: { field, value }
+};
+const CHS = {}; // chart instances
+const FILE = 'autogarage_100k.xlsx';
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+const el = id => document.getElementById(id);
+
+function fmtCHF(n, short = false) {
+  if (n == null || isNaN(n)) return '—';
+  if (short) {
+    if (Math.abs(n) >= 1e6) return 'CHF ' + (n/1e6).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1000) return 'CHF ' + Math.round(n/1000) + 'k';
+    return 'CHF ' + Math.round(n);
+  }
+  return new Intl.NumberFormat('de-CH', { style:'currency', currency:'CHF', maximumFractionDigits:0 }).format(n);
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = d instanceof Date ? d : new Date(d);
+  return dt.toLocaleDateString('de-CH');
+}
+
+function toYM(d) {
+  const dt = d instanceof Date ? d : new Date(d);
+  return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0');
+}
+
+function ymLabel(ym) {
+  const [y,m] = ym.split('-');
+  const loc = S.lang === 'en' ? 'en-GB' : S.lang === 'fr' ? 'fr-CH' : 'de-CH';
+  return new Date(+y, +m-1).toLocaleDateString(loc, { month:'short', year:'2-digit' });
+}
+
+function groupBy(arr, fn) {
+  const m = {};
+  for (const r of arr) {
+    const k = typeof fn === 'function' ? fn(r) : r[fn];
+    if (k == null) continue;
+    (m[k] = m[k] || []).push(r);
+  }
+  return m;
+}
+
+function sumBy(arr, key) {
+  return arr.reduce((s,r) => s + (Number(r[key]) || 0), 0);
+}
+
+function topN(obj, n, valFn) {
+  return Object.entries(obj)
+    .sort((a,b) => valFn(b[1]) - valFn(a[1]))
+    .slice(0, n);
+}
+
+function uniqMonths(arr) {
+  return [...new Set(arr.map(r => toYM(r.Datum)))].sort();
+}
+
+function monthlyVals(arr, key, months) {
+  const g = groupBy(arr, r => toYM(r.Datum));
+  return months.map(m => sumBy(g[m] || [], key));
+}
+
+// ── TIME GRANULARITY ──────────────────────────────────────────────────────
+const timeGran = {}; // chartId -> 'day'|'month'|'year'
+
+function toDay(d) {
+  const dt = d instanceof Date ? d : new Date(d);
+  return dt.toISOString().slice(0,10);
+}
+
+function toYear(d) {
+  const dt = d instanceof Date ? d : new Date(d);
+  return String(dt.getFullYear());
+}
+
+function dayLabel(d) { return d; }
+function yearLabel(y) { return y; }
+
+function uniqDays(arr) {
+  return [...new Set(arr.map(r => toDay(r.Datum)))].sort();
+}
+
+function uniqYears(arr) {
+  return [...new Set(arr.map(r => toYear(r.Datum)))].sort();
+}
+
+function dailyVals(arr, key, days) {
+  const g = groupBy(arr, r => toDay(r.Datum));
+  return days.map(d => sumBy(g[d] || [], key));
+}
+
+function yearlyVals(arr, key, years) {
+  const g = groupBy(arr, r => toYear(r.Datum));
+  return years.map(y => sumBy(g[y] || [], key));
+}
+
+function getTimePeriods(arr, gran) {
+  if (gran === 'day') return { periods: uniqDays(arr), labelFn: dayLabel, valFn: dailyVals };
+  if (gran === 'year') return { periods: uniqYears(arr), labelFn: yearLabel, valFn: yearlyVals };
+  return { periods: uniqMonths(arr), labelFn: ymLabel, valFn: monthlyVals };
+}
+
+function setTimeGran(chartGroup, gran) {
+  timeGran[chartGroup] = gran;
+  document.querySelectorAll(`.time-toggle[data-group="${chartGroup}"] button`).forEach(b => {
+    b.classList.toggle('active', b.dataset.gran === gran);
+  });
+  render();
+}
+
+function getGran(chartGroup) {
+  return timeGran[chartGroup] || 'month';
+}
+
+function timeToggleHTML(chartGroup) {
+  const cur = getGran(chartGroup);
+  return `<div class="time-toggle" data-group="${chartGroup}">
+    <button data-gran="day" class="${cur==='day'?'active':''}" onclick="setTimeGran('${chartGroup}','day')">Tag</button>
+    <button data-gran="month" class="${cur==='month'?'active':''}" onclick="setTimeGran('${chartGroup}','month')">Monat</button>
+    <button data-gran="year" class="${cur==='year'?'active':''}" onclick="setTimeGran('${chartGroup}','year')">Jahr</button>
+  </div>`;
+}
+
+// ── PALETTES ──────────────────────────────────────────────────────────────
+const P_TEAL = ['#2D5E3F','#B5794B','#1E4D35','#9A9590','#3D7A56','#C8895B','#4A6741','#8B6E42','#6B7E5A','#A08060'];
+const P_PIE  = ['#2D5E3F','#B5794B','#1E4D35','#9A9590','#C8C8C8','#3D7A56','#C8895B','#6B7E5A'];
+const P_WERKSTATT = ['#B5794B','#C8895B','#A06A3C','#D4996B','#8B6E42','#E0A97B','#9A6030','#CC8855','#7A5530','#B07040'];
+const P_HANDEL    = ['#2D5E3F','#3D7A56','#1E4D35','#4A8E66','#1A3F2B','#5AA07A','#256B48','#347050','#4A6741','#6B8E70'];
+const P_WASH      = ['#9A9590','#B0ACA8','#7A7770','#C8C4C0','#6A6660','#D5D2CE','#8A8680','#A5A09A','#959088','#BFBAB5'];
+
+// ── CHART FACTORIES ───────────────────────────────────────────────────────
+function cd() {
+  return {
+    grid:    '#C8C8C8',
+    tick:    '#9A9590',
+    legend:  '#141410',
+    ttBg:    '#dcd7cb',
+    ttBody:  '#9A9590',
+  };
+}
+
+function baseOpts(countMode = false) {
+  const c = cd();
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: c.legend, font: { family:'Inter, system-ui', size:11 }, boxWidth:11, padding:10 } },
+      tooltip: {
+        backgroundColor: c.ttBg, titleColor: c.legend, bodyColor: c.ttBody,
+        borderColor: '#C8C8C8', borderWidth: 1,
+        callbacks: { label: ctx => ' ' + (countMode ? ctx.parsed.y.toLocaleString('de-CH') : fmtCHF(ctx.parsed.y)) }
+      }
+    },
+    scales: {
+      x: { ticks: { color:c.tick, font:{family:'Inter,system-ui',size:10} }, grid:{color:c.grid} },
+      y: {
+        ticks: {
+          color: c.tick, font:{family:'Inter,system-ui',size:10},
+          callback: v => countMode ? v.toLocaleString('de-CH') : fmtCHF(v, true)
+        },
+        grid: { color: c.grid }
+      }
+    }
+  };
+}
+
+function dnutOpts() {
+  const c = cd();
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: c.ttBg, titleColor: '#141410', bodyColor: c.ttBody,
+        borderColor: '#C8C8C8', borderWidth: 1,
+        displayColors: false,
+        titleFont: { family: 'Inter, system-ui', size: 12, weight: 'bold' },
+        callbacks: {
+          title: function(ctx) { return ctx[0].label; },
+          label: function(ctx) {
+            const total = ctx.dataset.data.reduce((s,v) => s + (v||0), 0);
+            const val = ctx.parsed || 0;
+            const pct = total > 0 ? (val / total * 100).toFixed(1) : '0.0';
+            const chf = val >= 1e6 ? 'CHF '+(val/1e6).toFixed(1)+'M' : val >= 1e3 ? 'CHF '+(val/1e3).toFixed(0)+"'000" : 'CHF '+val.toFixed(0);
+            return [pct + '%', chf];
+          }
+        }
+      }
+    }
+  };
+}
+
+// Doughnut label plugin — draws labels on segments
+const dnutLabelPlugin = {
+  id: 'dnutLabels',
+  afterDraw(chart) {
+    if (chart.config.type !== 'doughnut') return;
+    const ctx = chart.ctx;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta || !meta.data) return;
+    const total = meta.data.reduce((s, arc, i) => s + (chart.data.datasets[0].data[i] || 0), 0);
+    if (total === 0) return;
+
+    ctx.save();
+    meta.data.forEach((arc, i) => {
+      const val = chart.data.datasets[0].data[i] || 0;
+      if (val === 0) return;
+      const pct = total > 0 ? (val / total * 100) : 0;
+      const centerAngle = (arc.startAngle + arc.endAngle) / 2;
+      const outerR = arc.outerRadius;
+      const innerR = arc.innerRadius;
+      const pctText = pct.toFixed(1) + '%';
+
+      if (pct >= 8) {
+        const midR = (outerR + innerR) / 2;
+        const x = arc.x + Math.cos(centerAngle) * midR;
+        const y = arc.y + Math.sin(centerAngle) * midR;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+        ctx.fillText(pctText, x, y);
+      } else {
+        const startX = arc.x + Math.cos(centerAngle) * outerR;
+        const startY = arc.y + Math.sin(centerAngle) * outerR;
+        const extR = outerR + 16;
+        const midX = arc.x + Math.cos(centerAngle) * extR;
+        const midY = arc.y + Math.sin(centerAngle) * extR;
+        const isRight = Math.cos(centerAngle) >= 0;
+        const endX = midX + (isRight ? 14 : -14);
+        const endY = midY;
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(midX, midY);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = '#9A9590';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#141410';
+        ctx.textAlign = isRight ? 'left' : 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 10px Inter, system-ui, sans-serif';
+        ctx.fillText(pctText, endX + (isRight ? 3 : -3), endY);
+      }
+    });
+    ctx.restore();
+  }
+};
+Chart.register(dnutLabelPlugin);
+
+function mkChart(id, cfg) {
+  const existing = CHS[id];
+  if (existing) {
+    // Update existing chart instead of destroy/recreate
+    try {
+      const c = existing;
+      c.data.labels = cfg.data.labels;
+      // Update datasets
+      cfg.data.datasets.forEach((ds, i) => {
+        if (c.data.datasets[i]) {
+          Object.assign(c.data.datasets[i], ds);
+        } else {
+          c.data.datasets.push(ds);
+        }
+      });
+      // Remove extra datasets
+      while (c.data.datasets.length > cfg.data.datasets.length) c.data.datasets.pop();
+      // Update options
+      if (cfg.options) {
+        c.options = cfg.options;
+        if (cfg.options.onClick) c.options.onClick = cfg.options.onClick;
+      }
+      c.update('none'); // 'none' = no animation for instant update
+      return;
+    } catch(e) {
+      // Fallback: destroy and recreate
+      existing.destroy();
+      delete CHS[id];
+    }
+  }
+  const canvas = el(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  CHS[id] = new Chart(ctx, cfg);
+}
+
+// ── DATA LOADING ──────────────────────────────────────────────────────────
+async function loadData() {
+  const buf = await fetch(FILE + '?_=' + Date.now()).then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.arrayBuffer();
+  });
+  const wb = XLSX.read(buf, { cellDates: true });
+  S.raw.svc   = XLSX.utils.sheet_to_json(wb.Sheets['Services'],       { defval: null });
+  S.raw.sales = XLSX.utils.sheet_to_json(wb.Sheets['Kauf_Verkauf'],   { defval: null });
+  S.raw.wash  = XLSX.utils.sheet_to_json(wb.Sheets['Autowaschanlage'],{ defval: null });
+
+  // Ensure Datum is Date
+  for (const arr of [S.raw.svc, S.raw.sales, S.raw.wash])
+    for (const r of arr)
+      if (r.Datum && !(r.Datum instanceof Date)) r.Datum = new Date(r.Datum);
+
+  // Init date range once
+  if (!S.dateFrom) {
+    const all = [...S.raw.svc, ...S.raw.sales, ...S.raw.wash].map(r => r.Datum).filter(Boolean);
+    S.dateFrom = new Date(Math.min(...all));
+    S.dateTo   = new Date(Math.max(...all));
+  }
+
+  const total = S.raw.svc.length + S.raw.sales.length + S.raw.wash.length;
+  el('ft-rows').textContent    = total.toLocaleString('de-CH') + ' Datensätze';
+}
+
+// ── MULTI-SELECT FILTER SYSTEM ─────────────────────────────────────────
+const FILTERS = {};
+
+function buildMultiSelect(wrapperId, label, values) {
+  const wrap = el(wrapperId);
+  if (!wrap) return;
+  const sorted = [...values].sort((a,b) => String(a).localeCompare(String(b), 'de'));
+  FILTERS[wrapperId] = new Set(); // empty = all selected
+  wrap.innerHTML = `
+    <button class="ms-btn" onclick="toggleDrop('${wrapperId}')">
+      <span class="ms-label">${label}</span>
+      <span class="ms-count" id="${wrapperId}-cnt" style="display:none">0</span>
+      <span class="ms-arrow">▼</span>
+    </button>
+    <div class="ms-drop" id="${wrapperId}-drop">
+      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" checked onchange="msToggleAll('${wrapperId}',this)"> Alle</label>
+      ${sorted.map(v => `<label><input type="checkbox" value="${String(v).replace(/"/g,'&quot;')}" onchange="onFilterCheck('${wrapperId}',this)">${v}</label>`).join('')}
+      <div style="padding:0.4rem 0.8rem; border-top:1px solid var(--border); margin-top:0.3rem; text-align:right;">
+        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('${wrapperId}')">Anwenden</button>
+      </div>
+    </div>`;
+}
+
+function toggleDrop(id) {
+  const drop = el(id + '-drop');
+  const btn = drop.previousElementSibling;
+  const isOpen = drop.classList.contains('show');
+  document.querySelectorAll('.ms-drop.show').forEach(d => { d.classList.remove('show'); d.previousElementSibling.classList.remove('open'); });
+  if (!isOpen) { drop.classList.add('show'); btn.classList.add('open'); }
+}
+
+function msToggleAll(wrapperId, cb) {
+  const drop = el(wrapperId + '-drop');
+  const checkboxes = drop.querySelectorAll('input[type="checkbox"][value]');
+  if (cb.checked) {
+    // Alle: clear filter, uncheck all individual
+    FILTERS[wrapperId].clear();
+    checkboxes.forEach(c => c.checked = false);
+    const cnt = el(wrapperId + '-cnt');
+    cnt.style.display = 'none';
+  } else {
+    // Deselect Alle: select all individual
+    checkboxes.forEach(c => { c.checked = true; FILTERS[wrapperId].add(c.value); });
+    const cnt = el(wrapperId + '-cnt');
+    cnt.textContent = FILTERS[wrapperId].size; cnt.style.display = '';
+  }
+}
+
+function onFilterCheck(wrapperId, cb) {
+  const f = FILTERS[wrapperId];
+  if (cb.checked) f.add(cb.value); else f.delete(cb.value);
+  const cnt = el(wrapperId + '-cnt');
+  if (f.size > 0) { cnt.textContent = f.size; cnt.style.display = ''; }
+  else { cnt.style.display = 'none'; }
+  // Update "Alle" checkbox
+  const drop = el(wrapperId + '-drop');
+  const allCb = drop.querySelector('input[type="checkbox"]:not([value])');
+  if (allCb) allCb.checked = (f.size === 0);
+  // Don't render yet — wait for Anwenden
+}
+
+function msApply(wrapperId) {
+  // Close dropdown and render
+  const drop = el(wrapperId + '-drop');
+  drop.classList.remove('show');
+  drop.previousElementSibling.classList.remove('open');
+  render();
+}
+
+function msMatch(wrapperId, value) {
+  const f = FILTERS[wrapperId];
+  if (!f || f.size === 0) return true; // nothing selected = show all
+  return f.has(String(value));
+}
+
+function resetAllFilters() {
+  Object.keys(FILTERS).forEach(k => FILTERS[k].clear());
+  document.querySelectorAll('.ms-drop input[type="checkbox"]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.ms-count').forEach(c => c.style.display = 'none');
+  document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pill-btn.all').forEach(b => b.classList.add('active'));
+  S.cf = null;
+  S.cfs = {};
+  el('cf-bar').style.display = 'none';
+  render();
+}
+
+function buildPillFilter(containerId, values, filterId) {
+  const container = el(containerId);
+  if (!container) return;
+  FILTERS[filterId] = new Set();
+  const sorted = Array.isArray(values) ? values : [...values].sort((a,b) => String(a).localeCompare(String(b), 'de'));
+  const pills = [`<button class="pill-btn all active" onclick="pillToggleAll('${filterId}','${containerId}')">Alle</button>`];
+  sorted.forEach(v => {
+    pills.push(`<button class="pill-btn" data-filter="${filterId}" data-val="${v}" onclick="pillToggle('${filterId}','${containerId}',this,'${v}')">${v}</button>`);
+  });
+  container.innerHTML = pills.join('');
+}
+
+function pillToggle(filterId, containerId, btn, value) {
+  const f = FILTERS[filterId];
+  const allBtn = el(containerId).querySelector('.pill-btn.all');
+  if (f.has(String(value))) {
+    f.delete(String(value));
+    btn.classList.remove('active');
+  } else {
+    f.add(String(value));
+    btn.classList.add('active');
+  }
+  // If none selected or all selected, show "Alle" as active
+  const total = el(containerId).querySelectorAll('.pill-btn:not(.all)').length;
+  if (f.size === 0 || f.size === total) {
+    f.clear();
+    el(containerId).querySelectorAll('.pill-btn:not(.all)').forEach(b => b.classList.remove('active'));
+    allBtn.classList.add('active');
+  } else {
+    allBtn.classList.remove('active');
+  }
+  render();
+}
+
+function pillToggleAll(filterId, containerId) {
+  FILTERS[filterId].clear();
+  el(containerId).querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+  el(containerId).querySelector('.pill-btn.all').classList.add('active');
+  render();
+}
+
+// Close dropdowns on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ms-wrap')) {
+    document.querySelectorAll('.ms-drop.show').forEach(d => { d.classList.remove('show'); d.previousElementSibling.classList.remove('open'); });
+  }
+});
+
+function initFilters() {
+  const years = new Set(), months = new Set();
+  const leistungen = new Set(), zustaende = new Set(), zahlungen = new Set(), waschprogs = new Set(), zusatz = new Set();
+  const handelMarken = new Set(), handelModelle = new Set();
+  const svcStatus = new Set(), svcMechaniker = new Set(), svcMarken = new Set(), svcModelle = new Set();
+  const monatNamen = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+  S.raw.svc.forEach(r => {
+    const d = r.Datum instanceof Date ? r.Datum : new Date(r.Datum);
+    if (!isNaN(d)) { years.add(d.getFullYear()); months.add(monatNamen[d.getMonth()]); }
+    if (r.Leistung) leistungen.add(r.Leistung);
+    if (r.Status) svcStatus.add(r.Status);
+    if (r.Mechaniker) svcMechaniker.add(r.Mechaniker);
+    if (r.Fahrzeugmarke) svcMarken.add(r.Fahrzeugmarke);
+    if (r.Modell) svcModelle.add(r.Modell);
+  });
+  S.raw.sales.forEach(r => {
+    const d = r.Datum instanceof Date ? r.Datum : new Date(r.Datum);
+    if (!isNaN(d)) { years.add(d.getFullYear()); months.add(monatNamen[d.getMonth()]); }
+    if (r.Zustand) zustaende.add(r.Zustand);
+    if (r.Zahlungsart) zahlungen.add(r.Zahlungsart);
+    if (r.Fahrzeugmarke) handelMarken.add(r.Fahrzeugmarke);
+    if (r.Modell) handelModelle.add(r.Modell);
+  });
+  const washZahlungen = new Set();
+  S.raw.wash.forEach(r => {
+    const d = r.Datum instanceof Date ? r.Datum : new Date(r.Datum);
+    if (!isNaN(d)) { years.add(d.getFullYear()); months.add(monatNamen[d.getMonth()]); }
+    if (r.Waschprogramm) waschprogs.add(r.Waschprogramm);
+    if (r.Zusatzleistungen) zusatz.add(r.Zusatzleistungen);
+    if (r.Zahlungsart) washZahlungen.add(r.Zahlungsart);
+  });
+
+  const monatOrder = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const monthsSorted = monatOrder.filter(m => months.has(m));
+
+  buildPillFilter('fw-jahr', [...years].sort(), 'fw-jahr');
+  buildPillFilter('fw-monat', monthsSorted, 'fw-monat');
+  buildMultiSelect('fw-leistung', 'Leistung', leistungen);
+  buildMultiSelect('fw-svc-status', 'Status', svcStatus);
+  buildMultiSelect('fw-svc-mechaniker', 'Mechaniker', svcMechaniker);
+  buildMultiSelect('fw-svc-marke', 'Marke', svcMarken);
+  buildMultiSelect('fw-svc-modell', 'Modell', svcModelle);
+  buildMultiSelect('fw-zustand', 'Zustand', zustaende);
+  buildMultiSelect('fw-zahlung', 'Zahlung', zahlungen);
+  buildMultiSelect('fw-handel-marke', 'Marke', handelMarken);
+  buildMultiSelect('fw-handel-modell', 'Modell', handelModelle);
+  buildMultiSelect('fw-waschprog', 'Programm', waschprogs);
+  buildMultiSelect('fw-zusatz', 'Zusatz', zusatz);
+  buildMultiSelect('fw-wash-zahlung', 'Zahlung', washZahlungen);
+}
+
+// ── FILTERING ─────────────────────────────────────────────────────────────
+const monatNamenGlobal = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+function filterRow(r, cfField) {
+  const d = r.Datum instanceof Date ? r.Datum : new Date(r.Datum);
+  if (isNaN(d)) return false;
+  if (!msMatch('fw-jahr', d.getFullYear())) return false;
+  if (!msMatch('fw-monat', monatNamenGlobal[d.getMonth()])) return false;
+  if (cfField === '_skip_cf_') return true;
+  // Check all active cross-filters
+  if (S.cfs) {
+    for (const [field, value] of Object.entries(S.cfs)) {
+      // WashZahlungsart is a virtual CF field that maps to Zahlungsart on wash rows
+      const actualField = field === 'WashZahlungsart' ? 'Zahlungsart' : field;
+      if (r[actualField] !== undefined && String(r[actualField]) !== String(value)) return false;
+    }
+  }
+  return true;
+}
+
+function filter(arr, cfField) {
+  return arr.filter(r => filterRow(r, cfField));
+}
+
+function getF() {
+  let svc   = filter(S.raw.svc, 'Mechaniker');
+  let sales = filter(S.raw.sales, 'Fahrzeugmarke');
+  let wash  = filter(S.raw.wash, 'Waschprogramm');
+
+  // Additional field filters
+  if (FILTERS['fw-leistung'] && FILTERS['fw-leistung'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-leistung'].has(r.Leistung));
+  if (FILTERS['fw-svc-status'] && FILTERS['fw-svc-status'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-svc-status'].has(r.Status));
+  if (FILTERS['fw-svc-mechaniker'] && FILTERS['fw-svc-mechaniker'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-svc-mechaniker'].has(r.Mechaniker));
+  if (FILTERS['fw-svc-marke'] && FILTERS['fw-svc-marke'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-svc-marke'].has(r.Fahrzeugmarke));
+  if (FILTERS['fw-svc-modell'] && FILTERS['fw-svc-modell'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-svc-modell'].has(r.Modell));
+  if (FILTERS['fw-zustand'] && FILTERS['fw-zustand'].size > 0)
+    sales = sales.filter(r => FILTERS['fw-zustand'].has(r.Zustand));
+  if (FILTERS['fw-zahlung'] && FILTERS['fw-zahlung'].size > 0)
+    sales = sales.filter(r => FILTERS['fw-zahlung'].has(r.Zahlungsart));
+  if (FILTERS['fw-handel-marke'] && FILTERS['fw-handel-marke'].size > 0)
+    sales = sales.filter(r => FILTERS['fw-handel-marke'].has(r.Fahrzeugmarke));
+  if (FILTERS['fw-handel-modell'] && FILTERS['fw-handel-modell'].size > 0)
+    sales = sales.filter(r => FILTERS['fw-handel-modell'].has(r.Modell));
+  if (FILTERS['fw-waschprog'] && FILTERS['fw-waschprog'].size > 0)
+    wash = wash.filter(r => FILTERS['fw-waschprog'].has(r.Waschprogramm));
+  if (FILTERS['fw-zusatz'] && FILTERS['fw-zusatz'].size > 0)
+    wash = wash.filter(r => FILTERS['fw-zusatz'].has(r.Zusatzleistungen));
+  if (FILTERS['fw-wash-zahlung'] && FILTERS['fw-wash-zahlung'].size > 0)
+    wash = wash.filter(r => FILTERS['fw-wash-zahlung'].has(r.Zahlungsart));
+
+  return { svc, sales, wash };
+}
+
+// Get filtered data WITHOUT cross-filters (for doughnut/bar base data with dimming)
+function getSvcNoCF() {
+  let svc = S.raw.svc.filter(r => filterRow(r,'_skip_cf_'));
+  if (FILTERS['fw-leistung'] && FILTERS['fw-leistung'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-leistung'].has(r.Leistung));
+  if (FILTERS['fw-svc-status'] && FILTERS['fw-svc-status'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-svc-status'].has(r.Status));
+  if (FILTERS['fw-svc-mechaniker'] && FILTERS['fw-svc-mechaniker'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-svc-mechaniker'].has(r.Mechaniker));
+  if (FILTERS['fw-svc-marke'] && FILTERS['fw-svc-marke'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-svc-marke'].has(r.Fahrzeugmarke));
+  if (FILTERS['fw-svc-modell'] && FILTERS['fw-svc-modell'].size > 0)
+    svc = svc.filter(r => FILTERS['fw-svc-modell'].has(r.Modell));
+  return svc;
+}
+
+function getSalesNoCF() {
+  let sales = S.raw.sales.filter(r => filterRow(r,'_skip_cf_'));
+  if (FILTERS['fw-zustand'] && FILTERS['fw-zustand'].size > 0)
+    sales = sales.filter(r => FILTERS['fw-zustand'].has(r.Zustand));
+  if (FILTERS['fw-zahlung'] && FILTERS['fw-zahlung'].size > 0)
+    sales = sales.filter(r => FILTERS['fw-zahlung'].has(r.Zahlungsart));
+  if (FILTERS['fw-handel-marke'] && FILTERS['fw-handel-marke'].size > 0)
+    sales = sales.filter(r => FILTERS['fw-handel-marke'].has(r.Fahrzeugmarke));
+  if (FILTERS['fw-handel-modell'] && FILTERS['fw-handel-modell'].size > 0)
+    sales = sales.filter(r => FILTERS['fw-handel-modell'].has(r.Modell));
+  return sales;
+}
+
+function getWashNoCF() {
+  let wash = S.raw.wash.filter(r => filterRow(r,'_skip_cf_'));
+  if (FILTERS['fw-waschprog'] && FILTERS['fw-waschprog'].size > 0)
+    wash = wash.filter(r => FILTERS['fw-waschprog'].has(r.Waschprogramm));
+  if (FILTERS['fw-zusatz'] && FILTERS['fw-zusatz'].size > 0)
+    wash = wash.filter(r => FILTERS['fw-zusatz'].has(r.Zusatzleistungen));
+  if (FILTERS['fw-wash-zahlung'] && FILTERS['fw-wash-zahlung'].size > 0)
+    wash = wash.filter(r => FILTERS['fw-wash-zahlung'].has(r.Zahlungsart));
+  return wash;
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────
+let _renderTimer = null;
+function render() {
+  if (_renderTimer) cancelAnimationFrame(_renderTimer);
+  _renderTimer = requestAnimationFrame(_doRender);
+}
+
+function _doRender() {
+  updateModelDropdown();
+  updateSvcModelDropdown();
+  const f = getF();
+  renderKPIs(f);
+  // Only render sections that are visible (not collapsed)
+  if (!el('sec-overview').classList.contains('collapsed')) renderOverview(f);
+  if (!el('sec-werkstatt').classList.contains('collapsed')) renderWerkstatt(f);
+  if (!el('sec-handel').classList.contains('collapsed')) renderHandel(f);
+  if (!el('sec-wash').classList.contains('collapsed')) renderWash(f);
+}
+
+// Re-render section when expanded
+
+function updateModelDropdown() {
+  const wrap = el('fw-handel-modell');
+  if (!wrap) return;
+  const markeFilter = FILTERS['fw-handel-marke'];
+  let availableModels;
+  if (markeFilter && markeFilter.size > 0) {
+    availableModels = new Set(S.raw.sales.filter(r => markeFilter.has(r.Fahrzeugmarke) && r.Modell).map(r => r.Modell));
+  } else {
+    availableModels = new Set(S.raw.sales.filter(r => r.Modell).map(r => r.Modell));
+  }
+  // Remember current selections that are still valid
+  const currentSel = FILTERS['fw-handel-modell'] || new Set();
+  const validSel = new Set([...currentSel].filter(m => availableModels.has(m)));
+  // Rebuild dropdown
+  const sorted = [...availableModels].sort((a,b) => String(a).localeCompare(String(b),'de'));
+  FILTERS['fw-handel-modell'] = validSel;
+  wrap.innerHTML = `
+    <button class="ms-btn" onclick="toggleDrop('fw-handel-modell')">
+      <span class="ms-label">Modell</span>
+      <span class="ms-count" id="fw-handel-modell-cnt" style="${validSel.size>0?'':'display:none'}">${validSel.size||0}</span>
+      <span class="ms-arrow">▼</span>
+    </button>
+    <div class="ms-drop" id="fw-handel-modell-drop">
+      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" ${validSel.size===0?'checked':''} onchange="msToggleAll('fw-handel-modell',this)"> Alle</label>
+      ${sorted.map(v => `<label><input type="checkbox" value="${String(v).replace(/"/g,'&quot;')}" ${validSel.has(v)?'checked':''} onchange="onFilterCheck('fw-handel-modell',this)">${v}</label>`).join('')}
+      <div style="padding:0.4rem 0.8rem; border-top:1px solid var(--border); margin-top:0.3rem; text-align:right;">
+        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('fw-handel-modell')">Anwenden</button>
+      </div>
+    </div>`;
+}
+
+function updateSvcModelDropdown() {
+  const wrap = el('fw-svc-modell');
+  if (!wrap) return;
+  const markeFilter = FILTERS['fw-svc-marke'];
+  let availableModels;
+  if (markeFilter && markeFilter.size > 0) {
+    availableModels = new Set(S.raw.svc.filter(r => markeFilter.has(r.Fahrzeugmarke) && r.Modell).map(r => r.Modell));
+  } else {
+    availableModels = new Set(S.raw.svc.filter(r => r.Modell).map(r => r.Modell));
+  }
+  const currentSel = FILTERS['fw-svc-modell'] || new Set();
+  const validSel = new Set([...currentSel].filter(m => availableModels.has(m)));
+  const sorted = [...availableModels].sort((a,b) => String(a).localeCompare(String(b),'de'));
+  FILTERS['fw-svc-modell'] = validSel;
+  wrap.innerHTML = `
+    <button class="ms-btn" onclick="toggleDrop('fw-svc-modell')">
+      <span class="ms-label">Modell</span>
+      <span class="ms-count" id="fw-svc-modell-cnt" style="${validSel.size>0?'':'display:none'}">${validSel.size||0}</span>
+      <span class="ms-arrow">▼</span>
+    </button>
+    <div class="ms-drop" id="fw-svc-modell-drop">
+      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" ${validSel.size===0?'checked':''} onchange="msToggleAll('fw-svc-modell',this)"> Alle</label>
+      ${sorted.map(v => `<label><input type="checkbox" value="${String(v).replace(/"/g,'&quot;')}" ${validSel.has(v)?'checked':''} onchange="onFilterCheck('fw-svc-modell',this)">${v}</label>`).join('')}
+      <div style="padding:0.4rem 0.8rem; border-top:1px solid var(--border); margin-top:0.3rem; text-align:right;">
+        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('fw-svc-modell')">Anwenden</button>
+      </div>
+    </div>`;
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────────────
+function renderKPIs(f) {
+  const svcRev    = sumBy(f.svc, 'Gesamtumsatz_CHF') || sumBy(f.svc, 'Gesamtkosten_CHF');
+  const svcCost   = sumBy(f.svc, 'Gesamtkosten_CHF');
+  const svcMarge  = svcRev - svcCost;
+  const svcMargePct = svcRev > 0 ? ((svcMarge / svcRev) * 100).toFixed(1) : '0.0';
+
+  const salesOnly = f.sales.filter(r => r.Typ === 'Verkauf');
+  const handRev   = sumBy(salesOnly, 'Verkaufspreis_CHF');
+  const handCost  = sumBy(salesOnly, 'Einkaufspreis_CHF');
+  const handMarge = sumBy(salesOnly, 'Marge_CHF');
+  const handMargePct = handRev > 0 ? ((handMarge / handRev) * 100).toFixed(1) : '0.0';
+
+  const washRev   = sumBy(f.wash, 'Preis_CHF');
+
+  const total     = svcRev + handRev + washRev;
+  const totalCost = svcCost + handCost;
+  const totalMarge = total - totalCost;
+  const totalMargePct = total > 0 ? ((totalMarge / total) * 100).toFixed(1) : '0.0';
+
+  el('v-total').textContent  = fmtCHF(total, true);
+  el('s-total').textContent  = totalMargePct + ' % Marge';
+  el('v-svc').textContent    = fmtCHF(svcRev, true);
+  el('s-svc').textContent    = svcMargePct + ' % Marge';
+  el('v-handel').textContent = fmtCHF(handRev, true);
+  el('s-handel').textContent = handMargePct + ' % Marge';
+  el('v-wash').textContent   = fmtCHF(washRev, true);
+  el('s-wash').textContent   = f.wash.length.toLocaleString('de-CH') + ' Wäschen';
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────
+function renderOverview(f) {
+  const salesOnly = f.sales.filter(r => r.Typ === 'Verkauf');
+  const allData = [...f.svc, ...salesOnly, ...f.wash];
+  const gran = getGran('overview');
+
+  // Inject time toggles
+  document.querySelectorAll('.overview-time-toggle').forEach(el => el.innerHTML = timeToggleHTML('overview'));
+
+  let periods, labelFn, valFn;
+  if (gran === 'day') {
+    periods = uniqDays(allData); labelFn = dayLabel; valFn = dailyVals;
+  } else if (gran === 'year') {
+    periods = uniqYears(allData); labelFn = yearLabel; valFn = yearlyVals;
+  } else {
+    periods = [...new Set(allData.map(r => toYM(r.Datum)))].sort(); labelFn = ymLabel; valFn = monthlyVals;
+  }
+  const labels = periods.map(labelFn);
+
+  const svcRevP   = valFn(f.svc, 'Gesamtumsatz_CHF', periods);
+  const svcCostP  = valFn(f.svc, 'Gesamtkosten_CHF', periods);
+  const handRevP  = valFn(salesOnly, 'Verkaufspreis_CHF', periods);
+  const handCostP = valFn(salesOnly, 'Einkaufspreis_CHF', periods);
+  const washRevP  = valFn(f.wash, 'Preis_CHF', periods);
+
+  const totalRevP  = periods.map((_,i) => (svcRevP[i]||0) + (handRevP[i]||0) + (washRevP[i]||0));
+  const totalCostP = periods.map((_,i) => (svcCostP[i]||0) + (handCostP[i]||0));
+  const totalMargePctP = totalRevP.map((r,i) => r > 0 ? +((r - totalCostP[i]) / r * 100).toFixed(1) : 0);
+
+  const svcMargePctP = svcRevP.map((r,i) => r > 0 ? +((r - svcCostP[i]) / r * 100).toFixed(1) : 0);
+  const handMargeP = valFn(salesOnly, 'Marge_CHF', periods);
+  const handMargePctP = handRevP.map((r,i) => r > 0 ? +((handMargeP[i]||0) / r * 100).toFixed(1) : 0);
+
+  const pr = gran === 'day' ? 0 : 2;
+  const lineStyle = (color) => ({ borderColor: color, backgroundColor: color+'18', fill: false, tension: 0.35, pointRadius: pr, pointHoverRadius: 5, borderWidth: 2 });
+
+  mkChart('overviewTotalChart', {
+    type: 'line',
+    data: { labels, datasets: [
+      { label:'Gesamtumsatz', data: totalRevP, ...lineStyle('#141410') }
+    ]},
+    options: baseOpts()
+  });
+
+  mkChart('overviewMargeChart', {
+    type: 'line',
+    data: { labels, datasets: [
+      { label:'Marge %', data: totalMargePctP, ...lineStyle('#141410') }
+    ]},
+    options: { ...baseOpts(), scales: { ...baseOpts().scales, y: { ...baseOpts().scales?.y, ticks: { callback: v => v.toFixed(1) + '%' } } } }
+  });
+
+  mkChart('overviewBereichChart', {
+    type: 'line',
+    data: { labels, datasets: [
+      { label:'Fahrzeughandel', data: handRevP, ...lineStyle('#2D5E3F') },
+      { label:'Werkstatt', data: svcRevP, ...lineStyle('#B5794B') },
+      { label:'Waschanlage', data: washRevP, ...lineStyle('#9A9590') },
+    ]},
+    options: baseOpts()
+  });
+
+  mkChart('overviewBereichMargeChart', {
+    type: 'line',
+    data: { labels, datasets: [
+      { label:'Fahrzeughandel', data: handMargePctP, ...lineStyle('#2D5E3F') },
+      { label:'Werkstatt', data: svcMargePctP, ...lineStyle('#B5794B') },
+    ]},
+    options: { ...baseOpts(), scales: { ...baseOpts().scales, y: { ...baseOpts().scales?.y, ticks: { callback: v => v.toFixed(1) + '%' } } } }
+  });
+}
+
+// ── WERKSTATT ─────────────────────────────────────────────────────────────
+function renderWerkstatt(f) {
+  const gran = getGran('werkstatt');
+  document.querySelectorAll('.werkstatt-time-toggle').forEach(el => el.innerHTML = timeToggleHTML('werkstatt'));
+
+  let periods, labelFn, valFn;
+  if (gran === 'day') { periods = uniqDays(f.svc); labelFn = dayLabel; valFn = dailyVals; }
+  else if (gran === 'year') { periods = uniqYears(f.svc); labelFn = yearLabel; valFn = yearlyVals; }
+  else { periods = uniqMonths(f.svc); labelFn = ymLabel; valFn = monthlyVals; }
+  const labels = periods.map(labelFn);
+  const pr = gran === 'day' ? 0 : 2;
+
+  const svcMeasure = S._svcMeasure || 'umsatz';
+  const isSvcUmsatz = svcMeasure === 'umsatz';
+  el('svcLineTitle').textContent = isSvcUmsatz ? 'Umsatz in CHF und %' : 'Marge in CHF und %';
+
+  const svcRevP = valFn(f.svc, 'Gesamtumsatz_CHF', periods);
+  const svcCostP = valFn(f.svc, 'Gesamtkosten_CHF', periods);
+  const svcMargeP = svcRevP.map((r,i) => r - (svcCostP[i]||0));
+  const svcMargePctP = svcRevP.map((r,i) => r > 0 ? +((r - (svcCostP[i]||0)) / r * 100).toFixed(1) : 0);
+
+  const c = cd();
+  if (isSvcUmsatz) {
+    mkChart('svcLineChart', {
+      type:'line',
+      data:{ labels, datasets:[
+        { label:'Umsatz', data: svcRevP, yAxisID:'y', borderColor:'#B5794B', backgroundColor:'rgba(181,121,75,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
+        { label:'Kosten', data: svcCostP, yAxisID:'y', borderColor:'#C8895B', backgroundColor:'rgba(200,137,91,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{labels:{color:c.legend,font:{family:'Inter,system-ui',size:11},boxWidth:11,padding:10}}, tooltip:{backgroundColor:c.ttBg,titleColor:c.legend,bodyColor:c.ttBody,borderColor:'#C8C8C8',borderWidth:1,callbacks:{label:ctx=>' '+fmtCHF(ctx.parsed.y)}}}, scales:{ x:{ticks:{color:c.tick,font:{family:'Inter,system-ui',size:10}},grid:{color:c.grid}}, y:{position:'left',ticks:{color:c.tick,font:{family:'Inter,system-ui',size:10},callback:v=>fmtCHF(v,true)},grid:{color:c.grid}}}}
+    });
+  } else {
+    mkChart('svcLineChart', {
+      type:'line',
+      data:{ labels, datasets:[
+        { label:'Marge CHF', data: svcMargeP, yAxisID:'y', borderColor:'#B5794B', backgroundColor:'rgba(181,121,75,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
+        { label:'Marge %', data: svcMargePctP, yAxisID:'y1', borderColor:'#C8895B', backgroundColor:'rgba(200,137,91,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{labels:{color:c.legend,font:{family:'Inter,system-ui',size:11},boxWidth:11,padding:10}}, tooltip:{backgroundColor:c.ttBg,titleColor:c.legend,bodyColor:c.ttBody,borderColor:'#C8C8C8',borderWidth:1,callbacks:{label:ctx=>ctx.dataset.yAxisID==='y1'?' '+ctx.parsed.y.toFixed(1)+'%':' '+fmtCHF(ctx.parsed.y)}}}, scales:{ x:{ticks:{color:c.tick,font:{family:'Inter,system-ui',size:10}},grid:{color:c.grid}}, y:{position:'left',ticks:{color:c.tick,font:{family:'Inter,system-ui',size:10},callback:v=>fmtCHF(v,true)},grid:{color:c.grid}}, y1:{position:'right',ticks:{color:'#C8895B',font:{family:'Inter,system-ui',size:10},callback:v=>v.toFixed(1)+'%'},grid:{drawOnChartArea:false}}}}
+    });
+  }
+
+  // 2. Leistungsarten doughnut — measure-aware, click-filter, dim
+  const typeG_all = groupBy(f.svc, 'Leistung');
+  const typeLabels = Object.keys(typeG_all);
+  const typeData = isSvcUmsatz
+    ? typeLabels.map(k => sumBy(typeG_all[k],'Gesamtumsatz_CHF'))
+    : typeLabels.map(k => { const rev=sumBy(typeG_all[k],'Gesamtumsatz_CHF'); return rev-sumBy(typeG_all[k],'Gesamtkosten_CHF'); });
+  const typeSorted = typeLabels.map((k,i)=>[k,typeData[i]]).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const typeColors = P_WERKSTATT.slice(0,typeSorted.length).map((col,i) =>
+    S.cfs && S.cfs['Leistung'] && S.cfs['Leistung'] !== typeSorted[i][0] ? col+'40' : col);
+  mkChart('svcTypeChart', {
+    type:'doughnut',
+    data:{ labels: typeSorted.map(e=>e[0]), datasets:[{ data: typeSorted.map(e=>e[1]), backgroundColor: typeColors, borderWidth:0 }] },
+    options: { ...dnutOpts(), plugins: dnutOpts().plugins,
+      onClick:(evt,elems,chart) => { if(elems.length) setCF('Leistung', chart.data.labels[elems[0].index]); }}
+  });
+
+  // 3. Mechaniker bar — topN, measure-aware, dim, click-filter
+  const mechN = S._mechTopN !== undefined ? S._mechTopN : 5;
+  const svcNoCF = f.svc;
+  const mechG = groupBy(svcNoCF, 'Mechaniker');
+  const mechEntries = Object.entries(mechG).map(([k,rows]) => {
+    const rev = sumBy(rows,'Gesamtumsatz_CHF');
+    const cost = sumBy(rows,'Gesamtkosten_CHF');
+    return [k, rows, rev, rev-cost];
+  });
+  mechEntries.sort((a,b) => isSvcUmsatz ? b[2]-a[2] : b[3]-a[3]);
+  const mechTop = mechN === 0 ? mechEntries : mechEntries.slice(0, mechN);
+
+  el('mechChartTitle').textContent = isSvcUmsatz ? 'Top Mechaniker — Umsatz' : 'Top Mechaniker — Marge';
+  document.querySelectorAll('#mechTopN-toggle button').forEach(b => {
+    const val = b.textContent === 'Alle' ? 0 : parseInt(b.textContent.replace('Top ',''));
+    b.classList.toggle('active', val === mechN);
+  });
+
+  const mechColors = P_WERKSTATT.slice(0,mechTop.length).map((col,i) =>
+    S.cfs && S.cfs['Mechaniker'] && S.cfs['Mechaniker'] !== mechTop[i][0] ? col+'40' : col);
+  const mc = cd();
+  mkChart('mechanicChart', {
+    type:'bar',
+    data:{ labels: mechTop.map(e=>e[0]),
+      datasets:[{ label: isSvcUmsatz ? 'Umsatz CHF' : 'Marge CHF',
+        data: mechTop.map(e => isSvcUmsatz ? e[2] : e[3]),
+        backgroundColor: mechColors, borderRadius:5 }] },
+    options:{
+      responsive: true, maintainAspectRatio: false, indexAxis:'y',
+      plugins: {
+        legend: { labels: { color: mc.legend, font:{family:'Inter,system-ui',size:11}, boxWidth:11, padding:10 } },
+        tooltip: { backgroundColor: mc.ttBg, titleColor: mc.legend, bodyColor: mc.ttBody, borderColor:'#C8C8C8', borderWidth:1,
+          callbacks: { label: ctx => ' ' + fmtCHF(ctx.parsed.x) }
+        }
+      },
+      scales: {
+        x: { ticks: { color: mc.tick, font:{family:'Inter,system-ui',size:10}, callback: v => fmtCHF(v, true) }, grid:{color:mc.grid} },
+        y: { ticks: { color: mc.tick, font:{family:'Inter,system-ui',size:10} }, grid:{color:mc.grid} }
+      },
+      onClick:(evt,elems) => { if(elems.length) setCF('Mechaniker', mechTop[elems[0].index][0]); }
+    }
+  });
+
+  // 4. Status doughnut — measure-aware, click-filter, dim
+  const statusG_all = groupBy(f.svc, 'Status');
+  const statusLabels = Object.keys(statusG_all);
+  const sCols = { Erledigt:'#B5794B', Offen:'#9A9590', Storniert:'#b41e1e' };
+  const statusData = isSvcUmsatz
+    ? statusLabels.map(k => sumBy(statusG_all[k],'Gesamtumsatz_CHF'))
+    : statusLabels.map(k => { const rev=sumBy(statusG_all[k],'Gesamtumsatz_CHF'); return rev-sumBy(statusG_all[k],'Gesamtkosten_CHF'); });
+  const statusColors = statusLabels.map(k => {
+    const base = sCols[k]||'#6366F1';
+    return S.cfs && S.cfs['Status'] && S.cfs['Status'] !== k ? base+'40' : base;
+  });
+  mkChart('statusChart', {
+    type:'doughnut',
+    data:{ labels: statusLabels, datasets:[{ data: statusData, backgroundColor: statusColors, borderWidth:0 }] },
+    options: { ...dnutOpts(), plugins: dnutOpts().plugins,
+      onClick:(evt,elems,chart) => { if(elems.length) setCF('Status', chart.data.labels[elems[0].index]); }}
+  });
+
+  // 5. Brand bar — topN, measure-aware, dim, click-filter, Quickinfo with models
+  const svcBrandN = S._svcBrandTopN !== undefined ? S._svcBrandTopN : 5;
+  const svcBrandMeasure = S._svcBrandMeasure || 'chf';
+  const svcBrandG = groupBy(svcNoCF, 'Fahrzeugmarke');
+  const svcBrandEntries = Object.entries(svcBrandG).map(([k,rows]) => {
+    const rev = sumBy(rows,'Gesamtumsatz_CHF');
+    const cost = sumBy(rows,'Gesamtkosten_CHF');
+    const marge = rev - cost;
+    const margePct = rev > 0 ? +(marge/rev*100).toFixed(1) : 0;
+    return [k, rows, rev, marge, margePct];
+  });
+
+  if (isSvcUmsatz) {
+    svcBrandEntries.sort((a,b) => svcBrandMeasure === 'pct' ? 0 : b[2]-a[2]);
+  } else {
+    svcBrandEntries.sort((a,b) => svcBrandMeasure === 'pct' ? b[4]-a[4] : b[3]-a[3]);
+  }
+  const svcBrandTop = svcBrandN === 0 ? svcBrandEntries : svcBrandEntries.slice(0, svcBrandN);
+
+  el('svcBrandChartTitle').textContent = isSvcUmsatz ? 'Top Marken — Umsatz' : 'Top Marken — Marge';
+  document.querySelectorAll('#svcBrandTopN-toggle button').forEach(b => {
+    const val = b.textContent === 'Alle' ? 0 : parseInt(b.textContent.replace('Top ',''));
+    b.classList.toggle('active', val === svcBrandN);
+  });
+  document.querySelectorAll('#svcBrandMeasure-toggle button').forEach(b => {
+    b.classList.toggle('active', (b.textContent === 'CHF' && svcBrandMeasure === 'chf') || (b.textContent === '%' && svcBrandMeasure === 'pct'));
+  });
+
+  const isSvcBrandCHF = svcBrandMeasure === 'chf';
+  let svcBarLabel, svcBarData, svcBarYFmt;
+  if (isSvcUmsatz) {
+    svcBarLabel = isSvcBrandCHF ? 'Umsatz CHF' : 'Marge %';
+    svcBarData = svcBrandTop.map(e => isSvcBrandCHF ? e[2] : e[4]);
+    svcBarYFmt = isSvcBrandCHF ? (v => fmtCHF(v,true)) : (v => v.toFixed(1)+'%');
+  } else {
+    svcBarLabel = isSvcBrandCHF ? 'Marge CHF' : 'Marge %';
+    svcBarData = svcBrandTop.map(e => isSvcBrandCHF ? e[3] : e[4]);
+    svcBarYFmt = isSvcBrandCHF ? (v => fmtCHF(v,true)) : (v => v.toFixed(1)+'%');
+  }
+
+  const svcBrandColors = P_WERKSTATT.slice(0,svcBrandTop.length).map((col,i) =>
+    S.cfs && S.cfs['Fahrzeugmarke'] && S.cfs['Fahrzeugmarke'] !== svcBrandTop[i][0] ? col+'40' : col);
+
+  mkChart('svcBrandChart', {
+    type:'bar',
+    data:{ labels: svcBrandTop.map(e=>e[0]),
+      datasets:[{ label: svcBarLabel, data: svcBarData, backgroundColor: svcBrandColors, borderRadius:5 }] },
+    options:{ ...baseOpts(),
+      scales: { ...baseOpts().scales, y: { ...baseOpts().scales.y, ticks: { ...baseOpts().scales.y.ticks, callback: svcBarYFmt } } },
+      onClick:(evt,elems) => { if(elems.length) setCF('Fahrzeugmarke', svcBrandTop[elems[0].index][0]); },
+      plugins: { ...baseOpts().plugins,
+        tooltip: { enabled: false, external: function(context) {
+          const tt = el('brandTooltip');
+          if (context.tooltip.opacity === 0) { tt.style.opacity = '0'; return; }
+          const idx = context.tooltip.dataPoints?.[0]?.dataIndex;
+          if (idx == null) return;
+          const [marke, rows, totalRev, totalMarge, totalPct] = svcBrandTop[idx];
+          const modelG = groupBy(rows, 'Modell');
+          const modelEntries = Object.entries(modelG).map(([m,mRows]) => {
+            const mr = sumBy(mRows,'Gesamtumsatz_CHF');
+            const mc = sumBy(mRows,'Gesamtkosten_CHF');
+            const mm = mr - mc;
+            const mp = mr > 0 ? +(mm/mr*100).toFixed(1) : 0;
+            return [m, mRows, mr, mm, mp];
+          });
+          if (isSvcUmsatz) modelEntries.sort((a,b) => b[2]-a[2]);
+          else modelEntries.sort((a,b) => isSvcBrandCHF ? b[3]-a[3] : b[4]-a[4]);
+          const models = modelEntries.slice(0,10);
+          const maxVal = models.length ? (isSvcUmsatz ? models[0][2] : isSvcBrandCHF ? models[0][3] : models[0][4]) : 1;
+
+          let html = `<div class="ct-title">${marke}</div>`;
+          html += `<div class="ct-total">Umsatz: ${fmtCHF(totalRev)} · Marge: ${fmtCHF(totalMarge)} (${totalPct}%)</div>`;
+          models.forEach(([m, mRows, mr, mm, mp], i) => {
+            const val = isSvcUmsatz ? mr : isSvcBrandCHF ? mm : mp;
+            const pct = maxVal > 0 ? (val / maxVal * 100) : 0;
+            const shade = P_WERKSTATT[i % P_WERKSTATT.length];
+            const valLabel = isSvcUmsatz ? fmtCHF(mr) : isSvcBrandCHF ? fmtCHF(mm) : mp.toFixed(1)+'%';
+            html += `<div class="ct-bar-row">
+              <span class="ct-bar-label">${m}</span>
+              <span class="ct-bar-track"><span class="ct-bar-fill" style="width:${pct}%;background:${shade};"><span style="padding-left:4px;font-size:0.65rem;color:#fff;white-space:nowrap;">${valLabel}</span></span></span>
+            </div>`;
+          });
+          tt.innerHTML = html;
+          const pos = context.chart.canvas.getBoundingClientRect();
+          const ttW = 340;
+          let left = pos.left + window.scrollX + context.tooltip.caretX + 15;
+          if (left + ttW > window.innerWidth) left = left - ttW - 30;
+          tt.style.left = left + 'px';
+          tt.style.top = (pos.top + window.scrollY + context.tooltip.caretY - 20) + 'px';
+          tt.style.opacity = '1';
+        }}
+      }
+    }
+  });
+}
+
+// ── HANDEL ────────────────────────────────────────────────────────────────
+function renderHandel(f) {
+  const salesOnly = f.sales.filter(r => r.Typ === 'Verkauf');
+  const gran = getGran('handel');
+  document.querySelectorAll('.handel-time-toggle').forEach(el => el.innerHTML = timeToggleHTML('handel'));
+
+  let periods, labelFn, valFn;
+  if (gran === 'day') { periods = uniqDays(f.sales); labelFn = dayLabel; valFn = dailyVals; }
+  else if (gran === 'year') { periods = uniqYears(f.sales); labelFn = yearLabel; valFn = yearlyVals; }
+  else { periods = uniqMonths(f.sales); labelFn = ymLabel; valFn = monthlyVals; }
+  const labels = periods.map(labelFn);
+  const pr = gran === 'day' ? 0 : 2;
+
+  const handelMeasure = S._handelMeasure || 'marge';
+  const isUmsatz = handelMeasure === 'umsatz';
+  el('marginChartTitle').textContent = isUmsatz ? 'Umsatz — Verkauf vs. Einkauf' : 'Marge in CHF und %';
+
+  const margeCHF = valFn(salesOnly,'Marge_CHF',periods);
+  const handRevP = valFn(salesOnly,'Verkaufspreis_CHF',periods);
+  const margePct = margeCHF.map((m,i) => handRevP[i] > 0 ? +((m / handRevP[i]) * 100).toFixed(1) : 0);
+  const handCostP = valFn(salesOnly,'Einkaufspreis_CHF',periods);
+
+  const c = cd();
+  if (isUmsatz) {
+    // Umsatz mode: VK-Preis line + EK-Preis line
+    mkChart('marginChart', {
+      type:'line',
+      data:{ labels,
+        datasets:[
+          { label:'Verkaufspreis', data: handRevP, yAxisID: 'y',
+            borderColor:'#2D5E3F', backgroundColor:'rgba(45,94,63,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
+          { label:'Einkaufspreis', data: handCostP, yAxisID: 'y',
+            borderColor:'#4A8E66', backgroundColor:'rgba(74,142,102,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
+        ] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: c.legend, font:{family:'Inter,system-ui',size:11}, boxWidth:11, padding:10 } },
+          tooltip: {
+            backgroundColor: c.ttBg, titleColor: c.legend, bodyColor: c.ttBody,
+            borderColor: '#C8C8C8', borderWidth: 1,
+            callbacks: { label: ctx => ' ' + fmtCHF(ctx.parsed.y) }
+          }
+        },
+        scales: {
+          x: { ticks: { color:c.tick, font:{family:'Inter,system-ui',size:10} }, grid:{color:c.grid} },
+          y: { position:'left', ticks: { color:c.tick, font:{family:'Inter,system-ui',size:10}, callback: v => fmtCHF(v,true) }, grid:{color:c.grid} }
+        }
+      }
+    });
+  } else {
+    // Marge mode: CHF + %
+    mkChart('marginChart', {
+      type:'line',
+      data:{ labels,
+        datasets:[
+          { label:'Marge CHF', data: margeCHF, yAxisID: 'y',
+            borderColor:'#2D5E3F', backgroundColor:'rgba(45,94,63,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
+          { label:'Marge %', data: margePct, yAxisID: 'y1',
+            borderColor:'#4A8E66', backgroundColor:'rgba(74,142,102,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
+        ] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: c.legend, font:{family:'Inter,system-ui',size:11}, boxWidth:11, padding:10 } },
+          tooltip: {
+            backgroundColor: c.ttBg, titleColor: c.legend, bodyColor: c.ttBody,
+            borderColor: '#C8C8C8', borderWidth: 1,
+            callbacks: { label: ctx => ctx.dataset.yAxisID === 'y1' ? ' ' + ctx.parsed.y.toFixed(1) + '%' : ' ' + fmtCHF(ctx.parsed.y) }
+          }
+        },
+        scales: {
+          x: { ticks: { color:c.tick, font:{family:'Inter,system-ui',size:10} }, grid:{color:c.grid} },
+          y: { position:'left', ticks: { color:c.tick, font:{family:'Inter,system-ui',size:10}, callback: v => fmtCHF(v,true) }, grid:{color:c.grid} },
+          y1: { position:'right', ticks: { color:'#4A8E66', font:{family:'Inter,system-ui',size:10}, callback: v => v.toFixed(1)+'%' }, grid:{drawOnChartArea:false} }
+        }
+      }
+    });
+  }
+
+  // 2. Payment doughnut — measure-aware, dim non-selected
+  const payG_all = groupBy(f.sales, 'Zahlungsart');
+  const payLabels = Object.keys(payG_all);
+  const payData = isUmsatz
+    ? payLabels.map(k => sumBy(payG_all[k],'Verkaufspreis_CHF'))
+    : payLabels.map(k => sumBy(payG_all[k],'Marge_CHF'));
+  const payColors = P_HANDEL.slice(0, payLabels.length).map((c,i) =>
+    S.cfs && S.cfs['Zahlungsart'] && S.cfs['Zahlungsart'] !== payLabels[i] ? c + '40' : c);
+  mkChart('payHandelChart', {
+    type:'doughnut',
+    data:{ labels: payLabels,
+      datasets:[{ data: payData,
+        backgroundColor: payColors, borderWidth:0 }] },
+    options: { ...dnutOpts(), plugins: dnutOpts().plugins,
+      onClick:(evt,elems,chart) => { if(elems.length) setCF('Zahlungsart', chart.data.labels[elems[0].index]); }
+    }
+  });
+
+  // 3. Brand bar with topN, measure toggle, and rich tooltip
+  S._handelSalesOnly = salesOnly;
+  const brandN = S._brandTopN !== undefined ? S._brandTopN : 5;
+  const brandMeasure = S._brandMeasure || 'chf';
+  const isHandelUmsatz = (S._handelMeasure || 'marge') === 'umsatz';
+  el('brandChartTitle').textContent = isHandelUmsatz ? 'Top Marken — Umsatz' : 'Top Marken — Marge';
+  const brandG   = groupBy(salesOnly, 'Fahrzeugmarke');
+
+  const brandEntries = Object.entries(brandG).map(([k,rows]) => {
+    const marge = sumBy(rows,'Marge_CHF');
+    const rev = sumBy(rows,'Verkaufspreis_CHF');
+    const pct = rev > 0 ? +(marge/rev*100).toFixed(1) : 0;
+    return [k, rows, marge, pct, rev];
+  });
+
+  if (isHandelUmsatz) {
+    brandEntries.sort((a,b) => b[4]-a[4]);
+  } else {
+    brandEntries.sort((a,b) => brandMeasure === 'pct' ? b[3]-a[3] : b[2]-a[2]);
+  }
+  const brandTop = brandN === 0 ? brandEntries : brandEntries.slice(0, brandN);
+
+  document.querySelectorAll('#brandTopN-toggle button').forEach(b => {
+    const val = b.textContent === 'Alle' ? 0 : parseInt(b.textContent.replace('Top ',''));
+    b.classList.toggle('active', val === brandN);
+  });
+  document.querySelectorAll('#brandMeasure-toggle button').forEach(b => {
+    b.classList.toggle('active', (b.textContent === 'CHF' && brandMeasure === 'chf') || (b.textContent === '%' && brandMeasure === 'pct'));
+  });
+
+  const isCHF = brandMeasure === 'chf';
+  let barLabel, barData, barYFmt;
+  if (isHandelUmsatz) {
+    barLabel = 'Umsatz CHF';
+    barData = brandTop.map(e => e[4]);
+    barYFmt = v => fmtCHF(v,true);
+  } else if (isCHF) {
+    barLabel = 'Marge CHF';
+    barData = brandTop.map(e => e[2]);
+    barYFmt = v => fmtCHF(v,true);
+  } else {
+    barLabel = 'Marge %';
+    barData = brandTop.map(e => e[3]);
+    barYFmt = v => v.toFixed(1)+'%';
+  }
+
+  // Dim non-selected bars
+  const brandColors = P_HANDEL.slice(0,brandTop.length).map((c,i) =>
+    S.cfs && S.cfs['Fahrzeugmarke'] && S.cfs['Fahrzeugmarke'] !== brandTop[i][0] ? c + '40' : c);
+
+  mkChart('brandHandelChart', {
+    type:'bar',
+    data:{ labels: brandTop.map(e=>e[0]),
+      datasets:[{
+        label: barLabel,
+        data: barData,
+        backgroundColor: brandColors, borderRadius:5
+      }] },
+    options:{ ...baseOpts(),
+      scales: {
+        ...baseOpts().scales,
+        y: { ...baseOpts().scales.y, ticks: { ...baseOpts().scales.y.ticks, callback: barYFmt } }
+      },
+      onClick:(evt,elems) => {
+        if(elems.length) setCF('Fahrzeugmarke', brandTop[elems[0].index][0]);
+      },
+      plugins: {
+        ...baseOpts().plugins,
+        tooltip: { enabled: false, external: function(context) {
+          const tt = el('brandTooltip');
+          if (context.tooltip.opacity === 0) { tt.style.opacity = '0'; return; }
+          const idx = context.tooltip.dataPoints?.[0]?.dataIndex;
+          if (idx == null) return;
+          const [marke, rows, totalMarge, totalPct, totalRev] = brandTop[idx];
+          const markeData = salesOnly.filter(r => r.Fahrzeugmarke === marke);
+          const modelG = groupBy(markeData, 'Modell');
+          const modelEntries = Object.entries(modelG).map(([m,mRows]) => {
+            const mm = sumBy(mRows,'Marge_CHF');
+            const mr = sumBy(mRows,'Verkaufspreis_CHF');
+            const mp = mr > 0 ? +(mm/mr*100).toFixed(1) : 0;
+            return [m, mRows, mm, mp, mr];
+          });
+          // Sort models same as bars
+          if (isHandelUmsatz) { modelEntries.sort((a,b) => b[4]-a[4]); }
+          else if (isCHF) { modelEntries.sort((a,b) => b[2]-a[2]); }
+          else { modelEntries.sort((a,b) => b[3]-a[3]); }
+          const models = modelEntries.slice(0,10);
+          const maxVal = models.length ? (isHandelUmsatz ? models[0][4] : isCHF ? models[0][2] : models[0][3]) : 1;
+
+          let html = `<div class="ct-title">${marke}</div>`;
+          html += `<div class="ct-total">Umsatz: ${fmtCHF(totalRev)} · Marge: ${fmtCHF(totalMarge)} (${totalPct}%)</div>`;
+          models.forEach(([m, mRows, mm, mp, mr], i) => {
+            const val = isHandelUmsatz ? mr : isCHF ? mm : mp;
+            const pct = maxVal > 0 ? (val / maxVal * 100) : 0;
+            const shade = P_HANDEL[i % P_HANDEL.length];
+            const valLabel = isHandelUmsatz ? fmtCHF(mr) : isCHF ? fmtCHF(mm) : mp.toFixed(1)+'%';
+            html += `<div class="ct-bar-row">
+              <span class="ct-bar-label">${m}</span>
+              <span class="ct-bar-track"><span class="ct-bar-fill" style="width:${pct}%;background:${shade};"><span style="padding-left:4px;font-size:0.65rem;color:#fff;white-space:nowrap;">${valLabel}</span></span></span>
+            </div>`;
+          });
+          tt.innerHTML = html;
+          const pos = context.chart.canvas.getBoundingClientRect();
+          const ttW = 340;
+          let left = pos.left + window.scrollX + context.tooltip.caretX + 15;
+          if (left + ttW > window.innerWidth) left = left - ttW - 30;
+          tt.style.left = left + 'px';
+          tt.style.top = (pos.top + window.scrollY + context.tooltip.caretY - 20) + 'px';
+          tt.style.opacity = '1';
+        }}
+      }
+    }
+  });
+
+  // 4. Condition doughnut — measure-aware, dim non-selected
+  const condG_all = groupBy(f.sales, 'Zustand');
+  const condLabels = Object.keys(condG_all);
+  const condCols = { 'Sehr gut':'#2D5E3F', 'Gut':'#4A8E66', 'Mittel':'#9A9590', 'Schlecht':'#b41e1e' };
+  const condData = isUmsatz
+    ? condLabels.map(k => sumBy(condG_all[k],'Verkaufspreis_CHF'))
+    : condLabels.map(k => sumBy(condG_all[k],'Marge_CHF'));
+  const condColors = condLabels.map(k => {
+    const baseCol = condCols[k] || '#6366F1';
+    return S.cfs && S.cfs['Zustand'] && S.cfs['Zustand'] !== k ? baseCol + '40' : baseCol;
+  });
+  mkChart('conditionChart', {
+    type:'doughnut',
+    data:{ labels: condLabels,
+      datasets:[{ data: condData,
+        backgroundColor: condColors, borderWidth:0 }] },
+    options: { ...dnutOpts(), plugins: dnutOpts().plugins,
+      onClick:(evt,elems,chart) => { if(elems.length) setCF('Zustand', chart.data.labels[elems[0].index]); }
+    }
+  });
+}
+
+// ── WASH ──────────────────────────────────────────────────────────────────
+function renderWash(f) {
+  const gran = getGran('wash');
+  document.querySelectorAll('.wash-time-toggle').forEach(el => el.innerHTML = timeToggleHTML('wash'));
+
+  let periods, labelFn, valFn;
+  if (gran === 'day') { periods = uniqDays(f.wash); labelFn = dayLabel; valFn = dailyVals; }
+  else if (gran === 'year') { periods = uniqYears(f.wash); labelFn = yearLabel; valFn = yearlyVals; }
+  else { periods = uniqMonths(f.wash); labelFn = ymLabel; valFn = monthlyVals; }
+  const labels = periods.map(labelFn);
+  const pr = gran === 'day' ? 0 : 2;
+
+  // 1. Line chart - Umsatz
+  mkChart('washMonthlyChart', {
+    type:'line',
+    data:{ labels,
+      datasets:[{ label:'Umsatz CHF', data: valFn(f.wash,'Preis_CHF',periods),
+        borderColor:'#9A9590', backgroundColor:'rgba(154,149,144,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 }] },
+    options: baseOpts()
+  });
+
+  // 2. Program doughnut — measure-aware, click-filter, dim
+  const washData = f.wash;
+  const progG = groupBy(washData, 'Waschprogramm');
+  const progLabels = Object.keys(progG);
+  const progData = progLabels.map(k => sumBy(progG[k],'Preis_CHF'));
+  const progColors = P_WASH.slice(0, progLabels.length).map((c,i) =>
+    S.cfs && S.cfs['Waschprogramm'] && S.cfs['Waschprogramm'] !== progLabels[i] ? c+'40' : c);
+  mkChart('washProgChart', {
+    type:'doughnut',
+    data:{ labels: progLabels,
+      datasets:[{ data: progData, backgroundColor: progColors, borderWidth:0 }] },
+    options:{ ...dnutOpts(),
+      onClick:(evt,elems,chart) => { if(elems.length) setCF('Waschprogramm', chart.data.labels[elems[0].index]); }
+    }
+  });
+
+  // 3. Extra doughnut — click-filter, dim
+  const extraG = groupBy(washData, 'Zusatzleistungen');
+  const extraLabels = Object.keys(extraG);
+  const extraData = extraLabels.map(k => sumBy(extraG[k],'Preis_CHF'));
+  const extraColors = P_WASH.slice(0, extraLabels.length).map((c,i) =>
+    S.cfs && S.cfs['Zusatzleistungen'] && S.cfs['Zusatzleistungen'] !== extraLabels[i] ? c+'40' : c);
+  mkChart('washExtraChart', {
+    type:'doughnut',
+    data:{ labels: extraLabels,
+      datasets:[{ data: extraData, backgroundColor: extraColors, borderWidth:0 }] },
+    options:{ ...dnutOpts(),
+      onClick:(evt,elems,chart) => { if(elems.length) setCF('Zusatzleistungen', chart.data.labels[elems[0].index]); }
+    }
+  });
+
+  // 4. Payment doughnut — click-filter, dim
+  const washPayG = groupBy(washData, 'Zahlungsart');
+  const washPayLabels = Object.keys(washPayG);
+  const washPayData = washPayLabels.map(k => sumBy(washPayG[k],'Preis_CHF'));
+  const washPayColors = P_WASH.slice(0, washPayLabels.length).map((c,i) =>
+    S.cfs && S.cfs['WashZahlungsart'] && S.cfs['WashZahlungsart'] !== washPayLabels[i] ? c+'40' : c);
+  mkChart('washPayChart', {
+    type:'doughnut',
+    data:{ labels: washPayLabels,
+      datasets:[{ data: washPayData, backgroundColor: washPayColors, borderWidth:0 }] },
+    options:{ ...dnutOpts(),
+      onClick:(evt,elems,chart) => { if(elems.length) setCF('WashZahlungsart', chart.data.labels[elems[0].index]); }
+    }
+  });
+
+  // 5. Top Programm bar — with topN, CHF values, Quickinfo, click-filter, dim
+  const washProgN = S._washProgTopN !== undefined ? S._washProgTopN : 5;
+  const progEntries = Object.entries(groupBy(washData, 'Waschprogramm')).map(([k,rows]) => {
+    return [k, rows, sumBy(rows,'Preis_CHF'), rows.length];
+  });
+  progEntries.sort((a,b) => b[2]-a[2]);
+  const progTop = washProgN === 0 ? progEntries : progEntries.slice(0, washProgN);
+
+  document.querySelectorAll('#washProgTopN-toggle button').forEach(b => {
+    const val = b.textContent === 'Alle' ? 0 : parseInt(b.textContent.replace('Top ',''));
+    b.classList.toggle('active', val === washProgN);
+  });
+
+  const progBarColors = P_WASH.slice(0,progTop.length).map((col,i) =>
+    S.cfs && S.cfs['Waschprogramm'] && S.cfs['Waschprogramm'] !== progTop[i][0] ? col+'40' : col);
+
+  mkChart('washProgBarChart', {
+    type:'bar',
+    data:{ labels: progTop.map(e=>e[0]),
+      datasets:[{ label:'Umsatz CHF', data: progTop.map(e=>e[2]),
+        backgroundColor: progBarColors, borderRadius:5 }] },
+    options:{ ...baseOpts(),
+      onClick:(evt,elems) => { if(elems.length) setCF('Waschprogramm', progTop[elems[0].index][0]); },
+      plugins:{ ...baseOpts().plugins,
+        tooltip:{ enabled:false, external: function(context) {
+          const tt = el('brandTooltip');
+          if (context.tooltip.opacity === 0) { tt.style.opacity='0'; return; }
+          const idx = context.tooltip.dataPoints?.[0]?.dataIndex;
+          if (idx == null) return;
+          const [prog, rows, totalRev, count] = progTop[idx];
+          const extraG2 = groupBy(rows, 'Zusatzleistungen');
+          const extras = Object.entries(extraG2).map(([e,eRows]) => [e, sumBy(eRows,'Preis_CHF'), eRows.length]).sort((a,b)=>b[1]-a[1]);
+          const maxE = extras.length ? extras[0][1] : 1;
+          let html = `<div class="ct-title">${prog}</div>`;
+          html += `<div class="ct-total">Umsatz: ${fmtCHF(totalRev)} · ${count} Wäschen</div>`;
+          extras.forEach(([e, ev, ec], i) => {
+            const pct = maxE > 0 ? (ev/maxE*100) : 0;
+            const shade = P_WASH[i % P_WASH.length];
+            html += `<div class="ct-bar-row"><span class="ct-bar-label">${e}</span><span class="ct-bar-track"><span class="ct-bar-fill" style="width:${pct}%;background:${shade};"><span style="padding-left:4px;font-size:0.65rem;color:#fff;white-space:nowrap;">${fmtCHF(ev)}</span></span></span></div>`;
+          });
+          tt.innerHTML = html;
+          const pos = context.chart.canvas.getBoundingClientRect();
+          let left = pos.left + window.scrollX + context.tooltip.caretX + 15;
+          if (left + 340 > window.innerWidth) left = left - 370;
+          tt.style.left = left + 'px';
+          tt.style.top = (pos.top + window.scrollY + context.tooltip.caretY - 20) + 'px';
+          tt.style.opacity = '1';
+        }}
+      }
+    }
+  });
+}
+
+// ── BRAND DRILL-DOWN ──────────────────────────────────────────────────────
+function setBrandTopN(n) {
+  S._brandTopN = n;
+  render();
+}
+
+function setBrandMeasure(m) {
+  S._brandMeasure = m;
+  render();
+}
+
+function setHandelMeasure(m, btn) {
+  S._handelMeasure = m;
+  document.querySelectorAll('#fw-handel-measure .pill-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  render();
+}
+
+function setSvcMeasure(m, btn) {
+  S._svcMeasure = m;
+  document.querySelectorAll('#fw-svc-measure .pill-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  render();
+}
+
+function setMechTopN(n) {
+  S._mechTopN = n;
+  render();
+}
+
+function setSvcBrandTopN(n) {
+  S._svcBrandTopN = n;
+  render();
+}
+
+function setSvcBrandMeasure(m) {
+  S._svcBrandMeasure = m;
+  render();
+}
+
+function setWashProgTopN(n) {
+  S._washProgTopN = n;
+  render();
+}
+
+function showBrandDrill(marke) {
+  const salesOnly = S._handelSalesOnly || [];
+  const markeData = salesOnly.filter(r => r.Fahrzeugmarke === marke);
+  const modelG = groupBy(markeData, 'Modell');
+  const modelTop = topN(modelG, Object.keys(modelG).length, v => sumBy(v,'Marge_CHF'));
+
+  el('brandDrillWrap').style.display = 'block';
+  el('brandDrillTitle').textContent = marke + ' — Modelle';
+
+  mkChart('brandDrillChart', {
+    type:'bar',
+    data:{ labels: modelTop.map(e=>e[0]),
+      datasets:[{ label:'Marge CHF', data: modelTop.map(e=>sumBy(e[1],'Marge_CHF')),
+        backgroundColor: P_HANDEL.slice(0,modelTop.length), borderRadius:5 }] },
+    options: baseOpts()
+  });
+}
+
+function closeBrandDrill() {
+  el('brandDrillWrap').style.display = 'none';
+}
+
+// ── XLSX EXPORT ───────────────────────────────────────────────────────────
+function exportXLSX(section) {
+  const f = getF();
+  let data, filename;
+
+  if (section === 'werkstatt') {
+    data = f.svc.map(r => ({
+      Datum: fmtDate(r.Datum), Auftragsnummer: r.Auftragsnummer, Kunde: r.Kundenname,
+      Fahrzeugmarke: r.Fahrzeugmarke, Modell: r.Modell, Leistung: r.Leistung,
+      Mechaniker: r.Mechaniker, Arbeitszeit_Std: r.Arbeitszeit_Std,
+      Materialkosten_CHF: r.Materialkosten_CHF, Arbeitskosten_CHF: r.Arbeitskosten_CHF,
+      Gesamtkosten_CHF: r.Gesamtkosten_CHF, Gesamtumsatz_CHF: r.Gesamtumsatz_CHF, Status: r.Status
+    }));
+    filename = 'Werkstatt_Export.xlsx';
+  } else if (section === 'handel') {
+    data = f.sales.map(r => ({
+      Datum: fmtDate(r.Datum), Typ: r.Typ, Kunde: r.Kundenname,
+      Fahrzeugmarke: r.Fahrzeugmarke, Modell: r.Modell, Zustand: r.Zustand,
+      Einkaufspreis_CHF: r.Einkaufspreis_CHF, Verkaufspreis_CHF: r.Verkaufspreis_CHF,
+      Marge_CHF: r.Marge_CHF, Zahlungsart: r.Zahlungsart
+    }));
+    filename = 'Fahrzeughandel_Export.xlsx';
+  } else if (section === 'waschanlage') {
+    data = f.wash.map(r => ({
+      Datum: fmtDate(r.Datum), Waschprogramm: r.Waschprogramm,
+      Zusatzleistungen: r.Zusatzleistungen, Preis_CHF: r.Preis_CHF,
+      Zahlungsart: r.Zahlungsart
+    }));
+    filename = 'Waschanlage_Export.xlsx';
+  }
+
+  if (!data || !data.length) { alert('Keine Daten zum Exportieren.'); return; }
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, section);
+  XLSX.writeFile(wb, filename);
+}
+
+// ── REPORT EXPORT (PDF / PPTX) ────────────────────────────────────────────
+function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function expandAllForExport() {
+  return new Promise(resolve => {
+    const sections = document.querySelectorAll('.dash-section');
+    const wasCollapsed = [];
+    sections.forEach(s => {
+      if (s.classList.contains('collapsed')) {
+        wasCollapsed.push(s);
+        s.classList.remove('collapsed');
+      }
+    });
+    // Re-render charts so they get proper dimensions
+    render();
+    // Wait for Chart.js to finish rendering
+    setTimeout(() => resolve(wasCollapsed), 600);
+  });
+}
+
+function restoreCollapsed(wasCollapsed) {
+  wasCollapsed.forEach(s => s.classList.add('collapsed'));
+}
+function getActiveFiltersText() {
+  const parts = [];
+  // Year/Month
+  if (FILTERS['fw-jahr'] && FILTERS['fw-jahr'].size > 0) parts.push('Jahr: ' + [...FILTERS['fw-jahr']].join(', '));
+  if (FILTERS['fw-monat'] && FILTERS['fw-monat'].size > 0) parts.push('Monat: ' + [...FILTERS['fw-monat']].join(', '));
+  // Cross-filters
+  if (S.cfs) for (const [k,v] of Object.entries(S.cfs)) parts.push(k + ': ' + v);
+  // Dropdown filters
+  for (const [id, f] of Object.entries(FILTERS)) {
+    if (id.startsWith('fw-') && !['fw-jahr','fw-monat'].includes(id) && f.size > 0) {
+      const label = id.replace('fw-','').replace('svc-','').replace('handel-','').replace('wash-','');
+      parts.push(label + ': ' + [...f].slice(0,5).join(', ') + (f.size > 5 ? '…' : ''));
+    }
+  }
+  return parts.length ? 'Filter: ' + parts.join(' · ') : 'Keine Filter aktiv';
+}
+
+function getChartImages() {
+  const sections = [
+    { title: 'Übersicht', charts: ['overviewTotalChart','overviewMargeChart','overviewBereichChart','overviewBereichMargeChart'] },
+    { title: 'Fahrzeughandel', charts: ['marginChart','payHandelChart','brandHandelChart','conditionChart'] },
+    { title: 'Werkstatt & Service', charts: ['svcLineChart','svcTypeChart','mechanicChart','statusChart','svcBrandChart'] },
+    { title: 'Autowaschanlage', charts: ['washMonthlyChart','washProgChart','washExtraChart','washPayChart','washProgBarChart'] },
+  ];
+  const result = [];
+  for (const sec of sections) {
+    const images = [];
+    for (const id of sec.charts) {
+      if (CHS[id]) {
+        try { images.push(CHS[id].toBase64Image('image/png', 1)); } catch(e) {}
+      }
+    }
+    if (images.length) result.push({ title: sec.title, images });
+  }
+  return result;
+}
+
+function getKPIData() {
+  return {
+    total: el('v-total').textContent,
+    totalSub: el('s-total').textContent,
+    handel: el('v-handel').textContent,
+    handelSub: el('s-handel').textContent,
+    svc: el('v-svc').textContent,
+    svcSub: el('s-svc').textContent,
+    wash: el('v-wash').textContent,
+    washSub: el('s-wash').textContent,
+  };
+}
+
+async function exportPDF() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const wasCollapsed = await expandAllForExport();
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const W = 297, H = 210;
+  const filterText = getActiveFiltersText();
+  const kpi = getKPIData();
+  const sections = getChartImages();
+
+  // Title page
+  pdf.setFontSize(24);
+  pdf.setTextColor(30, 77, 53);
+  pdf.text('WerkstattPuls — Alpine AutoHaus', 20, 30);
+  pdf.setFontSize(10);
+  pdf.setTextColor(100);
+  pdf.text('Report erstellt: ' + new Date().toLocaleDateString('de-CH') + ' ' + new Date().toLocaleTimeString('de-CH'), 20, 40);
+  pdf.text(filterText, 20, 48, { maxWidth: W - 40 });
+
+  // KPIs
+  pdf.setFontSize(14);
+  pdf.setTextColor(20, 20, 16);
+  const kpis = [
+    { label: 'Gesamtumsatz', val: kpi.total, sub: kpi.totalSub },
+    { label: 'Fahrzeughandel', val: kpi.handel, sub: kpi.handelSub },
+    { label: 'Werkstatt & Service', val: kpi.svc, sub: kpi.svcSub },
+    { label: 'Autowaschanlage', val: kpi.wash, sub: kpi.washSub },
+  ];
+  let kx = 20;
+  kpis.forEach(k => {
+    pdf.setFontSize(9);
+    pdf.setTextColor(120);
+    pdf.text(k.label, kx, 68);
+    pdf.setFontSize(16);
+    pdf.setTextColor(20, 20, 16);
+    pdf.text(k.val, kx, 77);
+    pdf.setFontSize(8);
+    pdf.setTextColor(150);
+    pdf.text(k.sub, kx, 83);
+    kx += 65;
+  });
+
+  // Section pages
+  for (const sec of sections) {
+    pdf.addPage('a4', 'landscape');
+    pdf.setFontSize(18);
+    pdf.setTextColor(30, 77, 53);
+    pdf.text(sec.title, 20, 18);
+    pdf.setFontSize(8);
+    pdf.setTextColor(150);
+    pdf.text(filterText, 20, 25, { maxWidth: W - 40 });
+
+    const cols = Math.min(sec.images.length, 2);
+    const rows = Math.ceil(sec.images.length / 2);
+    const cw = (W - 50) / cols;
+    const ch = (H - 45) / rows;
+
+    sec.images.forEach((img, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = 20 + col * (cw + 5);
+      const y = 32 + row * (ch + 5);
+      try { pdf.addImage(img, 'PNG', x, y, cw, ch - 5); } catch(e) {}
+    });
+  }
+
+  restoreCollapsed(wasCollapsed);
+  pdf.save('WerkstattPuls_Report.pdf');
+}
+
+async function exportPPTX() {
+  await loadScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js');
+  const wasCollapsed = await expandAllForExport();
+  const pptx = new PptxGenJS();
+  pptx.defineLayout({ name: 'A4', width: 13.33, height: 7.5 });
+  pptx.layout = 'A4';
+  const filterText = getActiveFiltersText();
+  const kpi = getKPIData();
+  const sections = getChartImages();
+
+  // Title slide
+  let slide = pptx.addSlide();
+  slide.background = { color: 'F5F0E8' };
+  slide.addText('WerkstattPuls — Alpine AutoHaus', { x: 0.8, y: 0.8, fontSize: 28, color: '1E4D35', bold: true });
+  slide.addText('Report erstellt: ' + new Date().toLocaleDateString('de-CH'), { x: 0.8, y: 1.5, fontSize: 11, color: '999999' });
+  slide.addText(filterText, { x: 0.8, y: 1.9, fontSize: 9, color: '999999', w: 11 });
+
+  // KPIs on title slide
+  const kpis = [
+    { label: 'Gesamtumsatz', val: kpi.total, sub: kpi.totalSub, color: '141410' },
+    { label: 'Fahrzeughandel', val: kpi.handel, sub: kpi.handelSub, color: '2D5E3F' },
+    { label: 'Werkstatt & Service', val: kpi.svc, sub: kpi.svcSub, color: 'B5794B' },
+    { label: 'Autowaschanlage', val: kpi.wash, sub: kpi.washSub, color: '9A9590' },
+  ];
+  kpis.forEach((k, i) => {
+    const kx = 0.8 + i * 3;
+    slide.addText(k.label.toUpperCase(), { x: kx, y: 2.8, fontSize: 8, color: '999999', bold: true });
+    slide.addText(k.val, { x: kx, y: 3.15, fontSize: 20, color: k.color, bold: true });
+    slide.addText(k.sub, { x: kx, y: 3.7, fontSize: 9, color: '999999' });
+  });
+
+  // Section slides
+  for (const sec of sections) {
+    slide = pptx.addSlide();
+    slide.background = { color: 'F5F0E8' };
+    slide.addText(sec.title, { x: 0.5, y: 0.3, fontSize: 22, color: '1E4D35', bold: true });
+    slide.addText(filterText, { x: 0.5, y: 0.75, fontSize: 8, color: '999999', w: 11 });
+
+    const cols = Math.min(sec.images.length, 2);
+    const rows = Math.ceil(sec.images.length / 2);
+    const cw = 5.8;
+    const ch = rows > 1 ? 2.8 : 5.5;
+
+    sec.images.forEach((img, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = 0.5 + col * 6.2;
+      const y = 1.1 + row * (ch + 0.2);
+      try { slide.addImage({ data: img, x, y, w: cw, h: ch }); } catch(e) {}
+    });
+  }
+
+  restoreCollapsed(wasCollapsed);
+  pptx.writeFile({ fileName: 'WerkstattPuls_Report.pptx' });
+}
+
+// ── CROSS-FILTER ──────────────────────────────────────────────────────────
+function setCF(field, value) {
+  if (!S.cfs) S.cfs = {};
+  // Toggle: if same field+value, remove it
+  if (S.cfs[field] === value) {
+    delete S.cfs[field];
+  } else {
+    S.cfs[field] = value;
+  }
+  // Update S.cf for backward compat (dimming etc)
+  const keys = Object.keys(S.cfs);
+  S.cf = keys.length > 0 ? { field: keys[0], value: S.cfs[keys[0]] } : null;
+  // Update bar display
+  if (keys.length > 0) {
+    el('cf-bar').style.display = 'flex';
+    el('cf-text').textContent = t('cf_prefix') + ' ' + keys.map(k => k + ': ' + S.cfs[k]).join(' · ');
+  } else {
+    el('cf-bar').style.display = 'none';
+  }
+  render();
+}
+
+function clearCF() {
+  S.cfs = {};
+  S.cf = null;
+  el('cf-bar').style.display = 'none';
+  render();
+}
+
+function hasCF(field, value) {
+  return S.cfs && S.cfs[field] === value;
+}
+
+function isCFActive(field) {
+  return S.cfs && S.cfs[field] !== undefined;
+}
+
+// ── (date filter replaced by multi-select year/month) ─────────────────
+
+// ── LANG ──────────────────────────────────────────────────────────────────
+function setLang(lang) {
+  S.lang = lang;
+  document.documentElement.lang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent.trim() === lang.toUpperCase()));
+  document.querySelectorAll('[data-t]').forEach(node => {
+    const k = node.getAttribute('data-t');
+    if (TR[lang][k]) node.textContent = TR[lang][k];
+  });
+  render();
+}
+
+// ── THEME ─────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  S.theme = S.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', S.theme);
+  el('theme-btn').textContent = S.theme === 'dark' ? '☀️ Hell' : '🌙 Dunkel';
+  render();
+}
+
+// ── COLLAPSIBLE ───────────────────────────────────────────────────────────
+function toggleSec(id) {
+  const sec = el(id);
+  sec.classList.toggle('collapsed');
+  if (!sec.classList.contains('collapsed')) {
+    // Section was just opened — render its charts
+    const f = getF();
+    if (id === 'sec-overview') renderOverview(f);
+    if (id === 'sec-werkstatt') renderWerkstatt(f);
+    if (id === 'sec-handel') renderHandel(f);
+    if (id === 'sec-wash') renderWash(f);
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    await loadData();
+    initFilters();
+    el('loading').style.display = 'none';
+    el('app').style.display = 'block';
+    render();
+  } catch(e) {
+    el('loading').style.display = 'none';
+    el('error-state').style.display = 'flex';
+    console.error(e);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
