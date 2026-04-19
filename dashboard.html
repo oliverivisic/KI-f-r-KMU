@@ -501,9 +501,9 @@
         <span class="pill-filter-label">Monat</span>
         <div id="fw-monat"></div>
       </div>
-      <button class="btn-ghost" style="margin-left:auto;" onclick="resetAllFilters()">✕ Zurücksetzen</button>
-      <button class="btn-ghost" onclick="exportPDF()" style="font-size:0.75rem;">⬇ PDF</button>
-      <button class="btn-ghost" onclick="exportPPTX()" style="font-size:0.75rem;">⬇ PPTX</button>
+      <button class="btn-ghost" style="margin-left:auto;" onclick="resetAllFilters()" data-t="reset">✕ Zurücksetzen</button>
+      <button class="btn-ghost" onclick="exportPDF()" style="font-size:0.75rem;" data-t="export_pdf">⬇ PDF</button>
+      <button class="btn-ghost" onclick="exportPPTX()" style="font-size:0.75rem;" data-t="export_pptx">⬇ PPTX</button>
       <div id="cf-bar">
         <span id="cf-text"></span>
         <button onclick="clearCF()">✕</button>
@@ -517,22 +517,22 @@
     <!-- KPI CARDS -->
     <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
       <div class="kpi-card c-black">
-        <div class="kpi-label">Gesamtumsatz</div>
+        <div class="kpi-label" data-t="kpi_total">Gesamtumsatz</div>
         <div class="kpi-value" id="v-total">—</div>
         <div class="kpi-sub" id="s-total">—</div>
       </div>
       <div class="kpi-card c-green">
-        <div class="kpi-label">Fahrzeughandel</div>
+        <div class="kpi-label" data-t="kpi_handel">Fahrzeughandel</div>
         <div class="kpi-value" id="v-handel">—</div>
         <div class="kpi-sub" id="s-handel">—</div>
       </div>
       <div class="kpi-card c-orange">
-        <div class="kpi-label">Werkstatt &amp; Service</div>
+        <div class="kpi-label" data-t="kpi_svc">Werkstatt &amp; Service</div>
         <div class="kpi-value" id="v-svc">—</div>
         <div class="kpi-sub" id="s-svc">—</div>
       </div>
       <div class="kpi-card c-gray">
-        <div class="kpi-label">Autowaschanlage</div>
+        <div class="kpi-label" data-t="kpi_wash">Autowaschanlage</div>
         <div class="kpi-value" id="v-wash">—</div>
         <div class="kpi-sub" id="s-wash">—</div>
       </div>
@@ -552,26 +552,26 @@
         <div class="overview-time-toggle"></div>
         <div class="charts-2">
           <div class="chart-card">
-            <h3>Gesamtumsatz</h3>
-            <p class="chart-sub">Monatlicher Umsatz alle Bereiche</p>
+            <h3 data-t="ch_total_rev">Gesamtumsatz</h3>
+            <p class="chart-sub" data-t="ch_total_rev_sub">Monatlicher Umsatz alle Bereiche</p>
             <div class="chart-wrap"><canvas id="overviewTotalChart"></canvas></div>
           </div>
           <div class="chart-card">
-            <h3>Gesamtmarge %</h3>
-            <p class="chart-sub">Monatliche Marge in % alle Bereiche</p>
+            <h3 data-t="ch_total_marge">Gesamtmarge %</h3>
+            <p class="chart-sub" data-t="ch_total_marge_sub">Monatliche Marge in % alle Bereiche</p>
             <div class="chart-wrap"><canvas id="overviewMargeChart"></canvas></div>
           </div>
         </div>
         <div class="charts-2">
           <div class="chart-card">
-            <h3>Umsatz nach Bereich</h3>
-            <p class="chart-sub">Werkstatt · Fahrzeughandel · Waschanlage</p>
+            <h3 data-t="ch_rev_bereich">Umsatz nach Bereich</h3>
+            <p class="chart-sub" data-t="ch_bereich_sub">Fahrzeughandel · Werkstatt · Waschanlage</p>
             <div class="chart-wrap"><canvas id="overviewBereichChart"></canvas></div>
             <div class="chart-hint">Klick auf Legende zum Ein-/Ausblenden</div>
           </div>
           <div class="chart-card">
-            <h3>Marge nach Bereich %</h3>
-            <p class="chart-sub">Werkstatt · Fahrzeughandel · Waschanlage</p>
+            <h3 data-t="ch_marge_bereich">Marge nach Bereich %</h3>
+            <p class="chart-sub" data-t="ch_bereich_sub">Fahrzeughandel · Werkstatt · Waschanlage</p>
             <div class="chart-wrap"><canvas id="overviewBereichMargeChart"></canvas></div>
             <div class="chart-hint">Klick auf Legende zum Ein-/Ausblenden</div>
           </div>
@@ -589,7 +589,7 @@
         </div>
         <span class="section-chevron">▼</span>
       </div>
-      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label">Kennzahl</span><div id="fw-handel-measure"><button class="pill-btn active" onclick="setHandelMeasure('marge',this)">Marge</button><button class="pill-btn" onclick="setHandelMeasure('umsatz',this)">Umsatz</button></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Zahlung</span><div class="ms-wrap" id="fw-zahlung"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Zustand</span><div class="ms-wrap" id="fw-zustand"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Marke</span><div class="ms-wrap" id="fw-handel-marke"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Modell</span><div class="ms-wrap" id="fw-handel-modell"></div></div></div>
+      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label" data-t="fl_kennzahl">Kennzahl</span><div id="fw-handel-measure"><button class="pill-btn active" onclick="setHandelMeasure('marge',this)" data-t="btn_marge">Marge</button><button class="pill-btn" onclick="setHandelMeasure('umsatz',this)" data-t="btn_umsatz">Umsatz</button></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_zahlung">Zahlung</span><div class="ms-wrap" id="fw-zahlung"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_zustand">Zustand</span><div class="ms-wrap" id="fw-zustand"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_marke">Marke</span><div class="ms-wrap" id="fw-handel-marke"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_modell">Modell</span><div class="ms-wrap" id="fw-handel-modell"></div></div></div>
       <div class="section-body">
         <div class="handel-time-toggle"></div>
         <div class="charts-2">
@@ -609,7 +609,7 @@
             <h3 id="brandChartTitle">Top Marken — Marge</h3>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem;">
               <div class="time-toggle" id="brandTopN-toggle">
-                <button onclick="setBrandTopN(0)">Alle</button>
+                <button onclick="setBrandTopN(0)" data-t="btn_alle">Alle</button>
                 <button class="active" onclick="setBrandTopN(5)">Top 5</button>
                 <button onclick="setBrandTopN(10)">Top 10</button>
                 <button onclick="setBrandTopN(20)">Top 20</button>
@@ -628,7 +628,7 @@
           </div>
         </div>
         <div style="padding:0.8rem 0; text-align:left;">
-          <button class="btn-ghost" onclick="exportXLSX('handel')" style="font-size:0.8rem;">⬇ Fahrzeughandel-Daten als XLSX exportieren</button>
+          <button class="btn-ghost" onclick="exportXLSX('handel')" style="font-size:0.8rem;" data-t="export_handel">⬇ Fahrzeughandel als XLSX</button>
         </div>
       </div>
     </div>
@@ -643,7 +643,7 @@
         </div>
         <span class="section-chevron">▼</span>
       </div>
-      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label">Kennzahl</span><div id="fw-svc-measure"><button class="pill-btn active" onclick="setSvcMeasure('umsatz',this)">Umsatz</button><button class="pill-btn" onclick="setSvcMeasure('marge',this)">Marge</button></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Leistung</span><div class="ms-wrap" id="fw-leistung"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Status</span><div class="ms-wrap" id="fw-svc-status"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Mechaniker</span><div class="ms-wrap" id="fw-svc-mechaniker"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Marke</span><div class="ms-wrap" id="fw-svc-marke"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Modell</span><div class="ms-wrap" id="fw-svc-modell"></div></div></div>
+      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label" data-t="fl_kennzahl">Kennzahl</span><div id="fw-svc-measure"><button class="pill-btn active" onclick="setSvcMeasure('umsatz',this)" data-t="btn_umsatz">Umsatz</button><button class="pill-btn" onclick="setSvcMeasure('marge',this)" data-t="btn_marge">Marge</button></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_leistung">Leistung</span><div class="ms-wrap" id="fw-leistung"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_status">Status</span><div class="ms-wrap" id="fw-svc-status"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_mechaniker">Mechaniker</span><div class="ms-wrap" id="fw-svc-mechaniker"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_marke">Marke</span><div class="ms-wrap" id="fw-svc-marke"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_modell">Modell</span><div class="ms-wrap" id="fw-svc-modell"></div></div></div>
       <div class="section-body">
         <div class="werkstatt-time-toggle"></div>
         <div class="charts-2">
@@ -663,7 +663,7 @@
             <h3 id="mechChartTitle">Top Mechaniker — Umsatz</h3>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem;">
               <div class="time-toggle" id="mechTopN-toggle">
-                <button onclick="setMechTopN(0)">Alle</button>
+                <button onclick="setMechTopN(0)" data-t="btn_alle">Alle</button>
                 <button class="active" onclick="setMechTopN(5)">Top 5</button>
                 <button onclick="setMechTopN(10)">Top 10</button>
               </div>
@@ -681,7 +681,7 @@
             <h3 id="svcBrandChartTitle">Top Marken — Umsatz</h3>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem;">
               <div class="time-toggle" id="svcBrandTopN-toggle">
-                <button onclick="setSvcBrandTopN(0)">Alle</button>
+                <button onclick="setSvcBrandTopN(0)" data-t="btn_alle">Alle</button>
                 <button class="active" onclick="setSvcBrandTopN(5)">Top 5</button>
                 <button onclick="setSvcBrandTopN(10)">Top 10</button>
                 <button onclick="setSvcBrandTopN(20)">Top 20</button>
@@ -697,7 +697,7 @@
           </div>
         </div>
         <div style="padding:0.8rem 0; text-align:left;">
-          <button class="btn-ghost" onclick="exportXLSX('werkstatt')" style="font-size:0.8rem;">⬇ Werkstatt-Daten als XLSX exportieren</button>
+          <button class="btn-ghost" onclick="exportXLSX('werkstatt')" style="font-size:0.8rem;" data-t="export_werkstatt">⬇ Werkstatt als XLSX</button>
         </div>
       </div>
     </div>
@@ -712,7 +712,7 @@
         </div>
         <span class="section-chevron">▼</span>
       </div>
-      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label">Programm</span><div class="ms-wrap" id="fw-waschprog"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Zusatz</span><div class="ms-wrap" id="fw-zusatz"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label">Zahlung</span><div class="ms-wrap" id="fw-wash-zahlung"></div></div></div>
+      <div class="section-filters"><div class="pill-filter"><span class="pill-filter-label" data-t="fl_programm">Programm</span><div class="ms-wrap" id="fw-waschprog"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_zusatz">Zusatz</span><div class="ms-wrap" id="fw-zusatz"></div></div><div class="pill-filter" style="margin-left:1rem;"><span class="pill-filter-label" data-t="fl_zahlung">Zahlung</span><div class="ms-wrap" id="fw-wash-zahlung"></div></div></div>
       <div class="section-body">
         <div class="wash-time-toggle"></div>
         <div class="charts-2">
@@ -722,19 +722,19 @@
             <div class="chart-wrap"><canvas id="washMonthlyChart"></canvas></div>
           </div>
           <div class="chart-card">
-            <h3>Waschprogramme</h3>
+            <h3 data-t="ch_wash_prog">Waschprogramme</h3>
             
             <div class="chart-wrap"><canvas id="washProgChart"></canvas></div>
           </div>
         </div>
         <div class="charts-2">
           <div class="chart-card">
-            <h3>Zusatzleistungen</h3>
+            <h3 data-t="ch_wash_extra">Zusatzleistungen</h3>
             
             <div class="chart-wrap"><canvas id="washExtraChart"></canvas></div>
           </div>
           <div class="chart-card">
-            <h3>Zahlungsarten</h3>
+            <h3 data-t="ch_wash_pay">Zahlungsarten</h3>
             
             <div class="chart-wrap"><canvas id="washPayChart"></canvas></div>
           </div>
@@ -744,7 +744,7 @@
             <h3>Top Programme — Umsatz</h3>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem;">
               <div class="time-toggle" id="washProgTopN-toggle">
-                <button onclick="setWashProgTopN(0)">Alle</button>
+                <button onclick="setWashProgTopN(0)" data-t="btn_alle">Alle</button>
                 <button class="active" onclick="setWashProgTopN(5)">Top 5</button>
                 <button onclick="setWashProgTopN(10)">Top 10</button>
               </div>
@@ -754,7 +754,7 @@
           <div class="chart-card"></div>
         </div>
         <div style="padding:0.8rem 0; text-align:left;">
-          <button class="btn-ghost" onclick="exportXLSX('waschanlage')" style="font-size:0.8rem;">⬇ Waschanlage-Daten als XLSX exportieren</button>
+          <button class="btn-ghost" onclick="exportXLSX('waschanlage')" style="font-size:0.8rem;" data-t="export_wash">⬇ Waschanlage als XLSX</button>
         
         </div>
       </div>
@@ -767,7 +767,7 @@
       <span data-t="ft_source">Datenquelle:</span>
       <a href="autogarage_100k.xlsx">autogarage_100k.xlsx</a>
       &nbsp;·&nbsp; <span id="ft-rows"></span>
-      &nbsp;·&nbsp; <span data-t="ft_refresh">Auto-Aktualisierung alle 30s</span>
+      &nbsp;·&nbsp; <span data-t="ft_refresh"></span>
     </div>
   </footer>
 
@@ -783,99 +783,99 @@
 const TR = {
   de: {
     subtitle:'Ihr Geschäft auf einen Blick',
-    from:'Von', to:'Bis', apply:'Anwenden', reset:'Zurücksetzen',
-    kpi_total:'Gesamtumsatz', kpi_svc:'Werkstatt',
-    kpi_handel:'Fahrzeughandel Marge', kpi_wash:'Waschanlage', kpi_open:'Offene Aufträge',
-    sec_overview:'Umsatzübersicht', sec_overview_sub:'Monatlicher Umsatz aller Bereiche',
+    reset:'✕ Zurücksetzen',
+    kpi_total:'Gesamtumsatz', kpi_handel:'Fahrzeughandel', kpi_svc:'Werkstatt & Service', kpi_wash:'Autowaschanlage',
+    sec_overview:'Übersicht', sec_overview_sub:'Umsatz und Marge im Überblick',
     sec_werkstatt:'Werkstatt & Service', sec_werkstatt_sub:'Aufträge, Mechaniker, Leistungsarten, Status',
     sec_handel:'Fahrzeughandel', sec_handel_sub:'An- & Verkauf, Margen, Verkäufer, Zustand',
     sec_wash:'Autowaschanlage', sec_wash_sub:'Programme, Umsatz, Zahlungsarten, Zusatzleistungen',
-    ch_overview:'Monatlicher Umsatz — alle Bereiche', ch_overview_sub:'Werkstatt · Fahrzeughandel · Waschanlage',
-    ch_mechanic:'Top Mechaniker', ch_mechanic_sub:'Gesamterlös · Klick zum Filtern',
-    ch_svc_type:'Leistungsarten', ch_svc_type_sub:'Umsatz nach Servicetyp',
-    ch_brand_svc:'Fahrzeugmarken (Werkstatt)', ch_brand_svc_sub:'Anzahl Aufträge · Klick zum Filtern',
-    ch_status:'Auftragsstatus', ch_status_sub:'Erledigt / Offen / Storniert',
-    ch_margin:'Monatliche Marge', ch_margin_sub:'Verkaufserlös minus Einkaufspreis',
-    ch_pay_handel:'Zahlungsarten (Handel)', ch_pay_handel_sub:'Bar / Finanzierung / Leasing',
-    ch_brand_handel:'Top Marken — Marge', ch_brand_handel_sub:'Marge CHF nach Fahrzeugmarke · Klick zum Filtern',
-    ch_condition:'Fahrzeugzustand', ch_condition_sub:'Sehr gut / Gut / Mittel / Schlecht',
-    ch_wash_monthly:'Monatlicher Umsatz', ch_wash_monthly_sub:'CHF nach Monat',
-    ch_wash_prog:'Waschprogramme', ch_wash_prog_sub:'Basis / Standard / Premium / Deluxe · Klick zum Filtern',
-    ch_wash_extra:'Zusatzleistungen', ch_wash_extra_sub:'Polierung, Innenreinigung, Felgenreinigung',
-    ch_wash_pay:'Zahlungsarten (Waschanlage)', ch_wash_pay_sub:'Bar / Karte / Twint',
-    tbl_svc:'Letzte Aufträge (50)', tbl_handel:'Letzte Transaktionen (50)',
+    ch_total_rev:'Gesamtumsatz', ch_total_rev_sub:'Monatlicher Umsatz alle Bereiche',
+    ch_total_marge:'Gesamtmarge %', ch_total_marge_sub:'Monatliche Marge in % alle Bereiche',
+    ch_rev_bereich:'Umsatz nach Bereich', ch_marge_bereich:'Marge nach Bereich %',
+    ch_bereich_sub:'Fahrzeughandel · Werkstatt · Waschanlage',
+    ch_mechanic:'Top Mechaniker', ch_svc_type:'Leistungsarten', ch_status:'Auftragsstatus',
+    ch_condition:'Fahrzeugzustand', ch_wash_prog:'Waschprogramme', ch_wash_extra:'Zusatzleistungen',
+    ch_wash_pay:'Zahlungsarten', ch_wash_monthly:'Umsatz in CHF',
     hint_click:'Klick auf Legende zum Ein-/Ausblenden',
-    ft_powered:'Betrieben von WerkstattPuls', ft_source:'Datenquelle:', ft_refresh:'Auto-Aktualisierung alle 30s',
-    th_date:'Datum', th_nr:'Nr.', th_customer:'Kunde', th_brand:'Marke', th_model:'Modell',
-    th_service:'Leistung', th_mech:'Mechaniker', th_total:'Total', th_status:'Status',
-    th_type:'Typ', th_km:'KM', th_cond:'Zustand', th_buy:'EK', th_sell:'VK',
-    th_margin:'Marge', th_pay:'Zahlung', th_seller:'Verkäufer',
-    s_done:'Erledigt', s_open:'Offen', s_cancel:'Storniert', s_buy:'Ankauf', s_sell:'Verkauf',
+    ft_powered:'Betrieben von WerkstattPuls', ft_source:'Datenquelle:',
+    fl_kennzahl:'Kennzahl', fl_zahlung:'Zahlung', fl_zustand:'Zustand', fl_marke:'Marke', fl_modell:'Modell',
+    fl_leistung:'Leistung', fl_status:'Status', fl_mechaniker:'Mechaniker', fl_programm:'Programm', fl_zusatz:'Zusatz',
+    btn_marge:'Marge', btn_umsatz:'Umsatz', btn_alle:'Alle', btn_anwenden:'Anwenden',
+    top_marken_marge:'Top Marken — Marge', top_marken_umsatz:'Top Marken — Umsatz',
+    top_mech_umsatz:'Top Mechaniker — Umsatz', top_mech_marge:'Top Mechaniker — Marge',
+    marge_chf_pct:'Marge in CHF und %', umsatz_vk_ek:'Umsatz — Verkauf vs. Einkauf',
+    umsatz_chf:'Umsatz in CHF', umsatz_chf_pct:'Umsatz in CHF und %', marge_chf_pct2:'Marge in CHF und %',
+    top_prog_umsatz:'Top Programme — Umsatz',
+    export_handel:'⬇ Fahrzeughandel als XLSX', export_werkstatt:'⬇ Werkstatt als XLSX', export_wash:'⬇ Waschanlage als XLSX',
+    export_pdf:'⬇ PDF', export_pptx:'⬇ PPTX',
+    tag:'Tag', monat_btn:'Monat', jahr_btn:'Jahr',
     cf_prefix:'Aktiver Filter:',
+    theme_dark:'🌙 Dunkel', theme_light:'☀️ Hell',
+    pct_marge:' % Marge', waeschen:' Wäschen',
   },
   fr: {
     subtitle:'Votre activité en un coup d\'œil',
-    from:'Du', to:'Au', apply:'Appliquer', reset:'Réinitialiser',
-    kpi_total:'CA Total', kpi_svc:'Atelier',
-    kpi_handel:'Marge Commerce', kpi_wash:'Station lavage', kpi_open:'Ordres ouverts',
-    sec_overview:'Vue d\'ensemble', sec_overview_sub:'CA mensuel de tous les secteurs',
+    reset:'✕ Réinitialiser',
+    kpi_total:'CA Total', kpi_handel:'Commerce de véhicules', kpi_svc:'Atelier & Service', kpi_wash:'Station de lavage',
+    sec_overview:'Vue d\'ensemble', sec_overview_sub:'CA et marge en un coup d\'œil',
     sec_werkstatt:'Atelier & Service', sec_werkstatt_sub:'Ordres, mécaniciens, types de service',
     sec_handel:'Commerce de véhicules', sec_handel_sub:'Achats et ventes, marges, vendeurs',
     sec_wash:'Station de lavage', sec_wash_sub:'Programmes, CA, modes de paiement',
-    ch_overview:'CA Mensuel — tous secteurs', ch_overview_sub:'Atelier · Commerce · Lavage',
-    ch_mechanic:'Top Mécaniciens', ch_mechanic_sub:'CA total · Cliquer pour filtrer',
-    ch_svc_type:'Types de service', ch_svc_type_sub:'CA par type de service',
-    ch_brand_svc:'Marques (Atelier)', ch_brand_svc_sub:'Nb ordres · Cliquer pour filtrer',
-    ch_status:'Statut des ordres', ch_status_sub:'Terminé / Ouvert / Annulé',
-    ch_margin:'Marge mensuelle', ch_margin_sub:'Prix de vente moins prix d\'achat',
-    ch_pay_handel:'Modes de paiement', ch_pay_handel_sub:'Espèces / Financement / Leasing',
-    ch_brand_handel:'Top marques — Marge', ch_brand_handel_sub:'Marge CHF par marque · Cliquer pour filtrer',
-    ch_condition:'État du véhicule', ch_condition_sub:'Très bon / Bon / Moyen / Mauvais',
-    ch_wash_monthly:'CA mensuel lavage', ch_wash_monthly_sub:'CHF par mois',
-    ch_wash_prog:'Programmes de lavage', ch_wash_prog_sub:'Base / Standard / Premium / Deluxe',
-    ch_wash_extra:'Services supplémentaires', ch_wash_extra_sub:'Polissage, nettoyage intérieur, jantes',
-    ch_wash_pay:'Paiements (lavage)', ch_wash_pay_sub:'Espèces / Carte / Twint',
-    tbl_svc:'Derniers ordres (50)', tbl_handel:'Dernières transactions (50)',
+    ch_total_rev:'CA Total', ch_total_rev_sub:'CA mensuel tous secteurs',
+    ch_total_marge:'Marge totale %', ch_total_marge_sub:'Marge mensuelle en % tous secteurs',
+    ch_rev_bereich:'CA par secteur', ch_marge_bereich:'Marge par secteur %',
+    ch_bereich_sub:'Commerce · Atelier · Lavage',
+    ch_mechanic:'Top Mécaniciens', ch_svc_type:'Types de service', ch_status:'Statut des ordres',
+    ch_condition:'État du véhicule', ch_wash_prog:'Programmes de lavage', ch_wash_extra:'Services supplémentaires',
+    ch_wash_pay:'Modes de paiement', ch_wash_monthly:'CA en CHF',
     hint_click:'Cliquer sur la légende pour afficher/masquer',
-    ft_powered:'Propulsé par WerkstattPuls', ft_source:'Source des données:', ft_refresh:'Mise à jour auto toutes les 30s',
-    th_date:'Date', th_nr:'N°', th_customer:'Client', th_brand:'Marque', th_model:'Modèle',
-    th_service:'Service', th_mech:'Mécanicien', th_total:'Total', th_status:'Statut',
-    th_type:'Type', th_km:'KM', th_cond:'État', th_buy:'PA', th_sell:'PV',
-    th_margin:'Marge', th_pay:'Paiement', th_seller:'Vendeur',
-    s_done:'Terminé', s_open:'Ouvert', s_cancel:'Annulé', s_buy:'Achat', s_sell:'Vente',
+    ft_powered:'Propulsé par WerkstattPuls', ft_source:'Source des données:',
+    fl_kennzahl:'Indicateur', fl_zahlung:'Paiement', fl_zustand:'État', fl_marke:'Marque', fl_modell:'Modèle',
+    fl_leistung:'Service', fl_status:'Statut', fl_mechaniker:'Mécanicien', fl_programm:'Programme', fl_zusatz:'Suppléments',
+    btn_marge:'Marge', btn_umsatz:'CA', btn_alle:'Tous', btn_anwenden:'Appliquer',
+    top_marken_marge:'Top marques — Marge', top_marken_umsatz:'Top marques — CA',
+    top_mech_umsatz:'Top Mécaniciens — CA', top_mech_marge:'Top Mécaniciens — Marge',
+    marge_chf_pct:'Marge en CHF et %', umsatz_vk_ek:'CA — Vente vs. achat',
+    umsatz_chf:'CA en CHF', umsatz_chf_pct:'CA en CHF et %', marge_chf_pct2:'Marge en CHF et %',
+    top_prog_umsatz:'Top Programmes — CA',
+    export_handel:'⬇ Commerce en XLSX', export_werkstatt:'⬇ Atelier en XLSX', export_wash:'⬇ Lavage en XLSX',
+    export_pdf:'⬇ PDF', export_pptx:'⬇ PPTX',
+    tag:'Jour', monat_btn:'Mois', jahr_btn:'Année',
     cf_prefix:'Filtre actif:',
+    theme_dark:'🌙 Sombre', theme_light:'☀️ Clair',
+    pct_marge:' % Marge', waeschen:' Lavages',
   },
   en: {
     subtitle:'Your business at a glance',
-    from:'From', to:'To', apply:'Apply', reset:'Reset',
-    kpi_total:'Total Revenue', kpi_svc:'Workshop',
-    kpi_handel:'Vehicle Trade Margin', kpi_wash:'Car Wash', kpi_open:'Open Orders',
-    sec_overview:'Revenue Overview', sec_overview_sub:'Combined monthly revenue across all areas',
+    reset:'✕ Reset',
+    kpi_total:'Total Revenue', kpi_handel:'Vehicle Trade', kpi_svc:'Workshop & Service', kpi_wash:'Car Wash',
+    sec_overview:'Overview', sec_overview_sub:'Revenue and margin at a glance',
     sec_werkstatt:'Workshop & Service', sec_werkstatt_sub:'Orders, mechanics, service types, status',
     sec_handel:'Vehicle Trade', sec_handel_sub:'Purchases & sales, margins, sellers',
     sec_wash:'Car Wash', sec_wash_sub:'Programs, revenue, payment methods, extras',
-    ch_overview:'Monthly Revenue — All Areas', ch_overview_sub:'Workshop · Vehicle Trade · Car Wash',
-    ch_mechanic:'Top Mechanics', ch_mechanic_sub:'Total revenue · Click to filter',
-    ch_svc_type:'Service Types', ch_svc_type_sub:'Revenue by service type',
-    ch_brand_svc:'Vehicle Brands (Workshop)', ch_brand_svc_sub:'Order count · Click to filter',
-    ch_status:'Order Status', ch_status_sub:'Done / Open / Cancelled',
-    ch_margin:'Monthly Margin', ch_margin_sub:'Sale price minus purchase price',
-    ch_pay_handel:'Payment Methods', ch_pay_handel_sub:'Cash / Finance / Leasing',
-    ch_brand_handel:'Top Brands — Margin', ch_brand_handel_sub:'Margin CHF by brand · Click to filter',
-    ch_condition:'Vehicle Condition', ch_condition_sub:'Excellent / Good / Fair / Poor',
-    ch_wash_monthly:'Monthly Car Wash Revenue', ch_wash_monthly_sub:'CHF by month',
-    ch_wash_prog:'Wash Programs', ch_wash_prog_sub:'Basic / Standard / Premium / Deluxe',
-    ch_wash_extra:'Extra Services', ch_wash_extra_sub:'Polish, interior cleaning, wheel cleaning',
-    ch_wash_pay:'Payment Methods (Car Wash)', ch_wash_pay_sub:'Cash / Card / Twint',
-    tbl_svc:'Recent Orders (50)', tbl_handel:'Recent Transactions (50)',
+    ch_total_rev:'Total Revenue', ch_total_rev_sub:'Monthly revenue all areas',
+    ch_total_marge:'Total Margin %', ch_total_marge_sub:'Monthly margin in % all areas',
+    ch_rev_bereich:'Revenue by Area', ch_marge_bereich:'Margin by Area %',
+    ch_bereich_sub:'Trade · Workshop · Car Wash',
+    ch_mechanic:'Top Mechanics', ch_svc_type:'Service Types', ch_status:'Order Status',
+    ch_condition:'Vehicle Condition', ch_wash_prog:'Wash Programs', ch_wash_extra:'Extra Services',
+    ch_wash_pay:'Payment Methods', ch_wash_monthly:'Revenue in CHF',
     hint_click:'Click legend to show/hide',
-    ft_powered:'Powered by WerkstattPuls', ft_source:'Data source:', ft_refresh:'Auto-refresh every 30s',
-    th_date:'Date', th_nr:'No.', th_customer:'Customer', th_brand:'Brand', th_model:'Model',
-    th_service:'Service', th_mech:'Mechanic', th_total:'Total', th_status:'Status',
-    th_type:'Type', th_km:'KM', th_cond:'Condition', th_buy:'Buy', th_sell:'Sell',
-    th_margin:'Margin', th_pay:'Payment', th_seller:'Seller',
-    s_done:'Done', s_open:'Open', s_cancel:'Cancelled', s_buy:'Purchase', s_sell:'Sale',
+    ft_powered:'Powered by WerkstattPuls', ft_source:'Data source:',
+    fl_kennzahl:'Metric', fl_zahlung:'Payment', fl_zustand:'Condition', fl_marke:'Brand', fl_modell:'Model',
+    fl_leistung:'Service', fl_status:'Status', fl_mechaniker:'Mechanic', fl_programm:'Program', fl_zusatz:'Extras',
+    btn_marge:'Margin', btn_umsatz:'Revenue', btn_alle:'All', btn_anwenden:'Apply',
+    top_marken_marge:'Top Brands — Margin', top_marken_umsatz:'Top Brands — Revenue',
+    top_mech_umsatz:'Top Mechanics — Revenue', top_mech_marge:'Top Mechanics — Margin',
+    marge_chf_pct:'Margin in CHF and %', umsatz_vk_ek:'Revenue — Sale vs. Purchase',
+    umsatz_chf:'Revenue in CHF', umsatz_chf_pct:'Revenue in CHF and %', marge_chf_pct2:'Margin in CHF and %',
+    top_prog_umsatz:'Top Programs — Revenue',
+    export_handel:'⬇ Export trade as XLSX', export_werkstatt:'⬇ Export workshop as XLSX', export_wash:'⬇ Export car wash as XLSX',
+    export_pdf:'⬇ PDF', export_pptx:'⬇ PPTX',
+    tag:'Day', monat_btn:'Month', jahr_btn:'Year',
     cf_prefix:'Active filter:',
+    theme_dark:'🌙 Dark', theme_light:'☀️ Light',
+    pct_marge:' % Margin', waeschen:' Washes',
   }
 };
 
@@ -1005,9 +1005,9 @@ function getGran(chartGroup) {
 function timeToggleHTML(chartGroup) {
   const cur = getGran(chartGroup);
   return `<div class="time-toggle" data-group="${chartGroup}">
-    <button data-gran="day" class="${cur==='day'?'active':''}" onclick="setTimeGran('${chartGroup}','day')">Tag</button>
-    <button data-gran="month" class="${cur==='month'?'active':''}" onclick="setTimeGran('${chartGroup}','month')">Monat</button>
-    <button data-gran="year" class="${cur==='year'?'active':''}" onclick="setTimeGran('${chartGroup}','year')">Jahr</button>
+    <button data-gran="day" class="${cur==='day'?'active':''}" onclick="setTimeGran('${chartGroup}','day')" data-t="tag">Tag</button>
+    <button data-gran="month" class="${cur==='month'?'active':''}" onclick="setTimeGran('${chartGroup}','month')" data-t="monat_btn">Monat</button>
+    <button data-gran="year" class="${cur==='year'?'active':''}" onclick="setTimeGran('${chartGroup}','year')" data-t="jahr_btn">Jahr</button>
   </div>`;
 }
 
@@ -1219,10 +1219,10 @@ function buildMultiSelect(wrapperId, label, values) {
       <span class="ms-arrow">▼</span>
     </button>
     <div class="ms-drop" id="${wrapperId}-drop">
-      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" checked onchange="msToggleAll('${wrapperId}',this)"> Alle</label>
+      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" checked onchange="msToggleAll('${wrapperId}',this)"> ${t('btn_alle')}</label>
       ${sorted.map(v => `<label><input type="checkbox" value="${String(v).replace(/"/g,'&quot;')}" onchange="onFilterCheck('${wrapperId}',this)">${v}</label>`).join('')}
       <div style="padding:0.4rem 0.8rem; border-top:1px solid var(--border); margin-top:0.3rem; text-align:right;">
-        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('${wrapperId}')">Anwenden</button>
+        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('${wrapperId}')">${t('btn_anwenden')}</button>
       </div>
     </div>`;
 }
@@ -1528,15 +1528,15 @@ function updateModelDropdown() {
   FILTERS['fw-handel-modell'] = validSel;
   wrap.innerHTML = `
     <button class="ms-btn" onclick="toggleDrop('fw-handel-modell')">
-      <span class="ms-label">Modell</span>
+      <span class="ms-label" data-t="fl_modell">Modell</span>
       <span class="ms-count" id="fw-handel-modell-cnt" style="${validSel.size>0?'':'display:none'}">${validSel.size||0}</span>
       <span class="ms-arrow">▼</span>
     </button>
     <div class="ms-drop" id="fw-handel-modell-drop">
-      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" ${validSel.size===0?'checked':''} onchange="msToggleAll('fw-handel-modell',this)"> Alle</label>
+      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" ${validSel.size===0?'checked':''} onchange="msToggleAll('fw-handel-modell',this)"> ${t('btn_alle')}</label>
       ${sorted.map(v => `<label><input type="checkbox" value="${String(v).replace(/"/g,'&quot;')}" ${validSel.has(v)?'checked':''} onchange="onFilterCheck('fw-handel-modell',this)">${v}</label>`).join('')}
       <div style="padding:0.4rem 0.8rem; border-top:1px solid var(--border); margin-top:0.3rem; text-align:right;">
-        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('fw-handel-modell')">Anwenden</button>
+        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('fw-handel-modell')">${t('btn_anwenden')}</button>
       </div>
     </div>`;
 }
@@ -1557,15 +1557,15 @@ function updateSvcModelDropdown() {
   FILTERS['fw-svc-modell'] = validSel;
   wrap.innerHTML = `
     <button class="ms-btn" onclick="toggleDrop('fw-svc-modell')">
-      <span class="ms-label">Modell</span>
+      <span class="ms-label" data-t="fl_modell">Modell</span>
       <span class="ms-count" id="fw-svc-modell-cnt" style="${validSel.size>0?'':'display:none'}">${validSel.size||0}</span>
       <span class="ms-arrow">▼</span>
     </button>
     <div class="ms-drop" id="fw-svc-modell-drop">
-      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" ${validSel.size===0?'checked':''} onchange="msToggleAll('fw-svc-modell',this)"> Alle</label>
+      <label style="font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.3rem; margin-bottom:0.2rem;"><input type="checkbox" ${validSel.size===0?'checked':''} onchange="msToggleAll('fw-svc-modell',this)"> ${t('btn_alle')}</label>
       ${sorted.map(v => `<label><input type="checkbox" value="${String(v).replace(/"/g,'&quot;')}" ${validSel.has(v)?'checked':''} onchange="onFilterCheck('fw-svc-modell',this)">${v}</label>`).join('')}
       <div style="padding:0.4rem 0.8rem; border-top:1px solid var(--border); margin-top:0.3rem; text-align:right;">
-        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('fw-svc-modell')">Anwenden</button>
+        <button class="btn-ghost" style="font-size:0.75rem; padding:0.2rem 0.6rem;" onclick="msApply('fw-svc-modell')">${t('btn_anwenden')}</button>
       </div>
     </div>`;
 }
@@ -1591,13 +1591,13 @@ function renderKPIs(f) {
   const totalMargePct = total > 0 ? ((totalMarge / total) * 100).toFixed(1) : '0.0';
 
   el('v-total').textContent  = fmtCHF(total, true);
-  el('s-total').textContent  = totalMargePct + ' % Marge';
+  el('s-total').textContent  = totalMargePct + t('pct_marge');
   el('v-svc').textContent    = fmtCHF(svcRev, true);
-  el('s-svc').textContent    = svcMargePct + ' % Marge';
+  el('s-svc').textContent    = svcMargePct + t('pct_marge');
   el('v-handel').textContent = fmtCHF(handRev, true);
-  el('s-handel').textContent = handMargePct + ' % Marge';
+  el('s-handel').textContent = handMargePct + t('pct_marge');
   el('v-wash').textContent   = fmtCHF(washRev, true);
-  el('s-wash').textContent   = f.wash.length.toLocaleString('de-CH') + ' Wäschen';
+  el('s-wash').textContent   = f.wash.length.toLocaleString('de-CH') + t('waeschen');
 }
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────────
@@ -1686,7 +1686,7 @@ function renderWerkstatt(f) {
 
   const svcMeasure = S._svcMeasure || 'umsatz';
   const isSvcUmsatz = svcMeasure === 'umsatz';
-  el('svcLineTitle').textContent = isSvcUmsatz ? 'Umsatz in CHF und %' : 'Marge in CHF und %';
+  el('svcLineTitle').textContent = isSvcUmsatz ? t('umsatz_chf_pct') : t('marge_chf_pct2');
 
   const svcRevP = valFn(f.svc, 'Gesamtumsatz_CHF', periods);
   const svcCostP = valFn(f.svc, 'Gesamtkosten_CHF', periods);
@@ -1742,9 +1742,9 @@ function renderWerkstatt(f) {
   mechEntries.sort((a,b) => isSvcUmsatz ? b[2]-a[2] : b[3]-a[3]);
   const mechTop = mechN === 0 ? mechEntries : mechEntries.slice(0, mechN);
 
-  el('mechChartTitle').textContent = isSvcUmsatz ? 'Top Mechaniker — Umsatz' : 'Top Mechaniker — Marge';
+  el('mechChartTitle').textContent = isSvcUmsatz ? t('top_mech_umsatz') : t('top_mech_marge');
   document.querySelectorAll('#mechTopN-toggle button').forEach(b => {
-    const val = b.textContent === 'Alle' ? 0 : parseInt(b.textContent.replace('Top ',''));
+    const val = b.getAttribute('data-t')==='btn_alle' ? 0 : parseInt(b.textContent.replace(/[^0-9]/g,''));
     b.classList.toggle('active', val === mechN);
   });
 
@@ -1810,9 +1810,9 @@ function renderWerkstatt(f) {
   }
   const svcBrandTop = svcBrandN === 0 ? svcBrandEntries : svcBrandEntries.slice(0, svcBrandN);
 
-  el('svcBrandChartTitle').textContent = isSvcUmsatz ? 'Top Marken — Umsatz' : 'Top Marken — Marge';
+  el('svcBrandChartTitle').textContent = isSvcUmsatz ? t('top_marken_umsatz') : t('top_marken_marge');
   document.querySelectorAll('#svcBrandTopN-toggle button').forEach(b => {
-    const val = b.textContent === 'Alle' ? 0 : parseInt(b.textContent.replace('Top ',''));
+    const val = b.getAttribute('data-t')==='btn_alle' ? 0 : parseInt(b.textContent.replace(/[^0-9]/g,''));
     b.classList.toggle('active', val === svcBrandN);
   });
   document.querySelectorAll('#svcBrandMeasure-toggle button').forEach(b => {
@@ -1902,7 +1902,7 @@ function renderHandel(f) {
 
   const handelMeasure = S._handelMeasure || 'marge';
   const isUmsatz = handelMeasure === 'umsatz';
-  el('marginChartTitle').textContent = isUmsatz ? 'Umsatz — Verkauf vs. Einkauf' : 'Marge in CHF und %';
+  el('marginChartTitle').textContent = isUmsatz ? t('umsatz_vk_ek') : t('marge_chf_pct');
 
   const margeCHF = valFn(salesOnly,'Marge_CHF',periods);
   const handRevP = valFn(salesOnly,'Verkaufspreis_CHF',periods);
@@ -1990,7 +1990,7 @@ function renderHandel(f) {
   const brandN = S._brandTopN !== undefined ? S._brandTopN : 5;
   const brandMeasure = S._brandMeasure || 'chf';
   const isHandelUmsatz = (S._handelMeasure || 'marge') === 'umsatz';
-  el('brandChartTitle').textContent = isHandelUmsatz ? 'Top Marken — Umsatz' : 'Top Marken — Marge';
+  el('brandChartTitle').textContent = isHandelUmsatz ? t('top_marken_umsatz') : t('top_marken_marge');
   const brandG   = groupBy(salesOnly, 'Fahrzeugmarke');
 
   const brandEntries = Object.entries(brandG).map(([k,rows]) => {
@@ -2008,7 +2008,7 @@ function renderHandel(f) {
   const brandTop = brandN === 0 ? brandEntries : brandEntries.slice(0, brandN);
 
   document.querySelectorAll('#brandTopN-toggle button').forEach(b => {
-    const val = b.textContent === 'Alle' ? 0 : parseInt(b.textContent.replace('Top ',''));
+    const val = b.getAttribute('data-t')==='btn_alle' ? 0 : parseInt(b.textContent.replace(/[^0-9]/g,''));
     b.classList.toggle('active', val === brandN);
   });
   document.querySelectorAll('#brandMeasure-toggle button').forEach(b => {
@@ -2197,7 +2197,7 @@ function renderWash(f) {
   const progTop = washProgN === 0 ? progEntries : progEntries.slice(0, washProgN);
 
   document.querySelectorAll('#washProgTopN-toggle button').forEach(b => {
-    const val = b.textContent === 'Alle' ? 0 : parseInt(b.textContent.replace('Top ',''));
+    const val = b.getAttribute('data-t')==='btn_alle' ? 0 : parseInt(b.textContent.replace(/[^0-9]/g,''));
     b.classList.toggle('active', val === washProgN);
   });
 
@@ -2611,7 +2611,7 @@ function setLang(lang) {
 function toggleTheme() {
   S.theme = S.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', S.theme);
-  el('theme-btn').textContent = S.theme === 'dark' ? '☀️ Hell' : '🌙 Dunkel';
+  el('theme-btn').textContent = S.theme === 'dark' ? t('theme_light') : t('theme_dark');
   render();
 }
 
