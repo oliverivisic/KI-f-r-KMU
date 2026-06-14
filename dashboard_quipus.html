@@ -744,7 +744,6 @@
 const TR = {
   de: {
     subtitle:'Ihr Geschäft auf einen Blick',
-    header_title:'Echtzeit',
     header_title:'Geschäftsanalyse',
     reset:'✕ Zurücksetzen',
     kpi_total:'Gesamtumsatz', kpi_handel:'Fahrzeughandel', kpi_svc:'Werkstatt & Service', kpi_wash:'Autowaschanlage',
@@ -774,14 +773,18 @@ const TR = {
     tag:'Tag', monat_btn:'Monat', jahr_btn:'Jahr',
     cf_prefix:'Aktiver Filter:',
     theme_dark:'🌙 Dunkel', theme_light:'☀️ Hell',
-    pct_marge:' % Marge en %',
-    ft_refresh:'Temps réel',
-    ft_refresh:'Echtzeit', waeschen:' Wäschen',
+    pct_marge:' % Marge',
+    ft_refresh:'Echtzeit',
+    datensaetze:'Datensätze', lbl_modelle:'Modelle',
+    lbl_handel:'Fahrzeughandel', lbl_werkstatt:'Werkstatt', lbl_waschanlage:'Waschanlage',
+    lbl_gesamtumsatz:'Gesamtumsatz', lbl_umsatz_chf:'Umsatz CHF', lbl_marge_chf:'Marge CHF',
+    lbl_marge_pct:'Marge %', lbl_einkauf:'Einkaufspreis', lbl_verkauf:'Verkaufspreis',
+    lbl_kosten:'Kosten',
+    waeschen:' Wäschen',
     mon:['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],
   },
   fr: {
     subtitle:'Votre activité en un coup d\'œil',
-    header_title:'Temps réel',
     header_title:'Analyse commerciale',
     reset:'✕ Réinitialiser',
     kpi_total:'CA Total', kpi_handel:'Commerce de véhicules', kpi_svc:'Atelier & Service', kpi_wash:'Station de lavage',
@@ -812,12 +815,15 @@ const TR = {
     cf_prefix:'Filtre actif:',
     theme_dark:'🌙 Sombre', theme_light:'☀️ Clair',
     pct_marge:' % Marge',
-    ft_refresh:'Echtzeit', waeschen:' Lavages',
+    lbl_handel:'Commerce de véhicules', lbl_werkstatt:'Atelier', lbl_waschanlage:'Station de lavage',
+    lbl_gesamtumsatz:'CA Total', lbl_umsatz_chf:'CA CHF', lbl_marge_chf:'Marge CHF',
+    lbl_marge_pct:'Marge %', lbl_einkauf:'Prix achat', lbl_verkauf:'Prix vente',
+    lbl_kosten:'Coûts',
+    ft_refresh:'Temps réel', datensaetze:'Enregistrements', lbl_modelle:'Modèles', datensaetze:'Enregistrements', waeschen:' Lavages',
     mon:['Jan','Fév','Mar','Avr','Mai','Juin','Jul','Aoû','Sep','Oct','Nov','Déc'],
   },
   en: {
     subtitle:'Your business at a glance',
-    header_title:'Real-time',
     header_title:'Business Analysis',
     reset:'✕ Reset',
     kpi_total:'Total Revenue', kpi_handel:'Vehicle Trade', kpi_svc:'Workshop & Service', kpi_wash:'Car Wash',
@@ -848,7 +854,11 @@ const TR = {
     cf_prefix:'Active filter:',
     theme_dark:'🌙 Dark', theme_light:'☀️ Light',
     pct_marge:' % Margin',
-    ft_refresh:'Real-time', waeschen:' Washes',
+    lbl_handel:'Vehicle Trade', lbl_werkstatt:'Workshop', lbl_waschanlage:'Car Wash',
+    lbl_gesamtumsatz:'Total Revenue', lbl_umsatz_chf:'Revenue CHF', lbl_marge_chf:'Margin CHF',
+    lbl_marge_pct:'Margin %', lbl_einkauf:'Purchase Price', lbl_verkauf:'Sale Price',
+    lbl_kosten:'Costs',
+    ft_refresh:'Real-time', datensaetze:'Records', lbl_modelle:'Models', datensaetze:'Records', waeschen:' Washes',
     mon:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
   }
 };
@@ -979,9 +989,9 @@ function getGran(chartGroup) {
 function timeToggleHTML(chartGroup) {
   const cur = getGran(chartGroup);
   return `<div class="time-toggle" data-group="${chartGroup}">
-    <button data-gran="day" class="${cur==='day'?'active':''}" onclick="setTimeGran('${chartGroup}','day')" data-t="tag">Tag</button>
-    <button data-gran="month" class="${cur==='month'?'active':''}" onclick="setTimeGran('${chartGroup}','month')" data-t="monat_btn">Monat</button>
-    <button data-gran="year" class="${cur==='year'?'active':''}" onclick="setTimeGran('${chartGroup}','year')" data-t="jahr_btn">Jahr</button>
+    <button data-gran="day" class="${cur==='day'?'active':''}" onclick="setTimeGran('${chartGroup}','day')" ">${t('tag')}</button>
+    <button data-gran="month" class="${cur==='month'?'active':''}" onclick="setTimeGran('${chartGroup}','month')" ">${t('monat_btn')}</button>
+    <button data-gran="year" class="${cur==='year'?'active':''}" onclick="setTimeGran('${chartGroup}','year')" ">${t('jahr_btn')}</button>
   </div>`;
 }
 
@@ -1175,7 +1185,7 @@ async function loadData() {
   }
 
   const total = S.raw.svc.length + S.raw.sales.length + S.raw.wash.length;
-  el('ft-rows').textContent    = total.toLocaleString('de-CH') + ' Datensätze';
+  el('ft-rows').textContent    = total.toLocaleString('de-CH') + ' ' + t('datensaetze');
 }
 
 // ── MULTI-SELECT FILTER SYSTEM ─────────────────────────────────────────
@@ -2267,7 +2277,7 @@ function showBrandDrill(marke) {
   const modelTop = topN(modelG, Object.keys(modelG).length, v => sumBy(v,'Marge_CHF'));
 
   el('brandDrillWrap').style.display = 'block';
-  el('brandDrillTitle').textContent = marke + ' — ' + t('fl_modell') + 'e';
+  el('brandDrillTitle').textContent = marke + ' — ' + t('lbl_modelle');
 
   mkChart('brandDrillChart', {
     type:'bar',
