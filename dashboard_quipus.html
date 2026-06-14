@@ -1267,7 +1267,7 @@ function buildPillFilter(containerId, values, filterId) {
   if (!container) return;
   FILTERS[filterId] = new Set();
   const sorted = Array.isArray(values) ? values : [...values].sort((a,b) => String(a).localeCompare(String(b), 'de'));
-  const pills = [`<button class="pill-btn all active" onclick="pillToggleAll('${filterId}','${containerId}')">Alle</button>`];
+  const pills = [`<button class="pill-btn all active" onclick="pillToggleAll('${filterId}','${containerId}')">${t('btn_alle')}</button>`];
   sorted.forEach(v => {
     pills.push(`<button class="pill-btn" data-filter="${filterId}" data-val="${v}" onclick="pillToggle('${filterId}','${containerId}',this,'${v}')">${v}</button>`);
   });
@@ -1315,7 +1315,7 @@ function initFilters() {
   const leistungen = new Set(), zustaende = new Set(), zahlungen = new Set(), waschprogs = new Set(), zusatz = new Set();
   const handelMarken = new Set(), handelModelle = new Set();
   const svcStatus = new Set(), svcMechaniker = new Set(), svcMarken = new Set(), svcModelle = new Set();
-  const monatNamen = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const monatNamen = t('mon');
 
   S.raw.svc.forEach(r => {
     const d = r.Datum instanceof Date ? r.Datum : new Date(r.Datum);
@@ -1343,33 +1343,33 @@ function initFilters() {
     if (r.Zahlungsart) washZahlungen.add(r.Zahlungsart);
   });
 
-  const monatOrder = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-  const monthsSorted = monatOrder.filter(m => months.has(m));
+  const monatOrder = t('mon');
+  const monthsSorted = t('mon').filter(m => months.has(m));
 
   buildPillFilter('fw-jahr', [...years].sort(), 'fw-jahr');
   buildPillFilter('fw-monat', monthsSorted, 'fw-monat');
-  buildMultiSelect('fw-leistung', 'Leistung', leistungen);
-  buildMultiSelect('fw-svc-status', 'Status', svcStatus);
-  buildMultiSelect('fw-svc-mechaniker', 'Mechaniker', svcMechaniker);
-  buildMultiSelect('fw-svc-marke', 'Marke', svcMarken);
-  buildMultiSelect('fw-svc-modell', 'Modell', svcModelle);
-  buildMultiSelect('fw-zustand', 'Zustand', zustaende);
-  buildMultiSelect('fw-zahlung', 'Zahlung', zahlungen);
-  buildMultiSelect('fw-handel-marke', 'Marke', handelMarken);
-  buildMultiSelect('fw-handel-modell', 'Modell', handelModelle);
-  buildMultiSelect('fw-waschprog', 'Programm', waschprogs);
-  buildMultiSelect('fw-zusatz', 'Zusatz', zusatz);
-  buildMultiSelect('fw-wash-zahlung', 'Zahlung', washZahlungen);
+  buildMultiSelect('fw-leistung', t('fl_leistung'), leistungen);
+  buildMultiSelect('fw-svc-status', t('fl_status'), svcStatus);
+  buildMultiSelect('fw-svc-mechaniker', t('fl_mechaniker'), svcMechaniker);
+  buildMultiSelect('fw-svc-marke', t('fl_marke'), svcMarken);
+  buildMultiSelect('fw-svc-modell', t('fl_modell'), svcModelle);
+  buildMultiSelect('fw-zustand', t('fl_zustand'), zustaende);
+  buildMultiSelect('fw-zahlung', t('fl_zahlung'), zahlungen);
+  buildMultiSelect('fw-handel-marke', t('fl_marke'), handelMarken);
+  buildMultiSelect('fw-handel-modell', t('fl_modell'), handelModelle);
+  buildMultiSelect('fw-waschprog', t('fl_programm'), waschprogs);
+  buildMultiSelect('fw-zusatz', t('fl_zusatz'), zusatz);
+  buildMultiSelect('fw-wash-zahlung', t('fl_zahlung'), washZahlungen);
 }
 
 // ── FILTERING ─────────────────────────────────────────────────────────────
-const monatNamenGlobal = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const monatNamenGlobal = () => t('mon');
 
 function filterRow(r, cfField) {
   const d = r.Datum instanceof Date ? r.Datum : new Date(r.Datum);
   if (isNaN(d)) return false;
   if (!msMatch('fw-jahr', d.getFullYear())) return false;
-  if (!msMatch('fw-monat', monatNamenGlobal[d.getMonth()])) return false;
+  if (!msMatch('fw-monat', monatNamenGlobal()[d.getMonth()])) return false;
   if (cfField === '_skip_cf_') return true;
   // Check all active cross-filters
   if (S.cfs) {
@@ -1610,7 +1610,7 @@ function renderOverview(f) {
   mkChart('overviewTotalChart', {
     type: 'line',
     data: { labels, datasets: [
-      { label:'Gesamtumsatz', data: totalRevP, ...lineStyle('#0a0a0a') }
+      { label:t('lbl_gesamtumsatz'), data: totalRevP, ...lineStyle('#0a0a0a') }
     ]},
     options: baseOpts()
   });
@@ -1618,7 +1618,7 @@ function renderOverview(f) {
   mkChart('overviewMargeChart', {
     type: 'line',
     data: { labels, datasets: [
-      { label:'Marge %', data: totalMargePctP, ...lineStyle('#0a0a0a') }
+      { label:t('lbl_marge_pct'), data: totalMargePctP, ...lineStyle('#0a0a0a') }
     ]},
     options: { ...baseOpts(), scales: { ...baseOpts().scales, y: { ...baseOpts().scales?.y, ticks: { callback: v => v.toFixed(1) + '%' } } } }
   });
@@ -1626,9 +1626,9 @@ function renderOverview(f) {
   mkChart('overviewBereichChart', {
     type: 'line',
     data: { labels, datasets: [
-      { label:'Fahrzeughandel', data: handRevP, ...lineStyle('#67B9BC') },
-      { label:'Werkstatt', data: svcRevP, ...lineStyle('#4A9B9E') },
-      { label:'Waschanlage', data: washRevP, ...lineStyle('#9A9590') },
+      { label:t('lbl_handel'), data: handRevP, ...lineStyle('#67B9BC') },
+      { label:t('lbl_werkstatt'), data: svcRevP, ...lineStyle('#4A9B9E') },
+      { label:t('lbl_waschanlage'), data: washRevP, ...lineStyle('#9A9590') },
     ]},
     options: baseOpts()
   });
@@ -1636,8 +1636,8 @@ function renderOverview(f) {
   mkChart('overviewBereichMargeChart', {
     type: 'line',
     data: { labels, datasets: [
-      { label:'Fahrzeughandel', data: handMargePctP, ...lineStyle('#67B9BC') },
-      { label:'Werkstatt', data: svcMargePctP, ...lineStyle('#4A9B9E') },
+      { label:t('lbl_handel'), data: handMargePctP, ...lineStyle('#67B9BC') },
+      { label:t('lbl_werkstatt'), data: svcMargePctP, ...lineStyle('#4A9B9E') },
     ]},
     options: { ...baseOpts(), scales: { ...baseOpts().scales, y: { ...baseOpts().scales?.y, ticks: { callback: v => v.toFixed(1) + '%' } } } }
   });
@@ -1670,7 +1670,7 @@ function renderWerkstatt(f) {
       type:'line',
       data:{ labels, datasets:[
         { label:'Umsatz', data: svcRevP, yAxisID:'y', borderColor:'#4A9B9E', backgroundColor:'rgba(74,155,158,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
-        { label:'Kosten', data: svcCostP, yAxisID:'y', borderColor:'#C8895B', backgroundColor:'rgba(200,137,91,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
+        { label:t('lbl_kosten'), data: svcCostP, yAxisID:'y', borderColor:'#C8895B', backgroundColor:'rgba(200,137,91,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
       ]},
       options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{labels:{color:c.legend,font:{family:'Inter,system-ui',size:11},boxWidth:11,padding:10}}, tooltip:{backgroundColor:c.ttBg,titleColor:c.legend,bodyColor:c.ttBody,borderColor:'#C8C8C8',borderWidth:1,callbacks:{label:ctx=>' '+fmtCHF(ctx.parsed.y)}}}, scales:{ x:{ticks:{color:c.tick,font:{family:'Inter,system-ui',size:10}},grid:{color:c.grid}}, y:{position:'left',ticks:{color:c.tick,font:{family:'Inter,system-ui',size:10},callback:v=>fmtCHF(v,true)},grid:{color:c.grid}}}}
     });
@@ -1678,8 +1678,8 @@ function renderWerkstatt(f) {
     mkChart('svcLineChart', {
       type:'line',
       data:{ labels, datasets:[
-        { label:'Marge CHF', data: svcMargeP, yAxisID:'y', borderColor:'#4A9B9E', backgroundColor:'rgba(74,155,158,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
-        { label:'Marge %', data: svcMargePctP, yAxisID:'y1', borderColor:'#C8895B', backgroundColor:'rgba(200,137,91,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
+        { label:t('lbl_marge_chf'), data: svcMargeP, yAxisID:'y', borderColor:'#4A9B9E', backgroundColor:'rgba(74,155,158,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
+        { label:t('lbl_marge_pct'), data: svcMargePctP, yAxisID:'y1', borderColor:'#C8895B', backgroundColor:'rgba(200,137,91,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
       ]},
       options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{labels:{color:c.legend,font:{family:'Inter,system-ui',size:11},boxWidth:11,padding:10}}, tooltip:{backgroundColor:c.ttBg,titleColor:c.legend,bodyColor:c.ttBody,borderColor:'#C8C8C8',borderWidth:1,callbacks:{label:ctx=>ctx.dataset.yAxisID==='y1'?' '+ctx.parsed.y.toFixed(1)+'%':' '+fmtCHF(ctx.parsed.y)}}}, scales:{ x:{ticks:{color:c.tick,font:{family:'Inter,system-ui',size:10}},grid:{color:c.grid}}, y:{position:'left',ticks:{color:c.tick,font:{family:'Inter,system-ui',size:10},callback:v=>fmtCHF(v,true)},grid:{color:c.grid}}, y1:{position:'right',ticks:{color:'#C8895B',font:{family:'Inter,system-ui',size:10},callback:v=>v.toFixed(1)+'%'},grid:{drawOnChartArea:false}}}}
     });
@@ -1887,9 +1887,9 @@ function renderHandel(f) {
       type:'line',
       data:{ labels,
         datasets:[
-          { label:'Verkaufspreis', data: handRevP, yAxisID: 'y',
+          { label:t('lbl_verkauf'), data: handRevP, yAxisID: 'y',
             borderColor:'#67B9BC', backgroundColor:'rgba(103,185,188,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
-          { label:'Einkaufspreis', data: handCostP, yAxisID: 'y',
+          { label:t('lbl_einkauf'), data: handCostP, yAxisID: 'y',
             borderColor:'#4A8E66', backgroundColor:'rgba(74,142,102,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
         ] },
       options: {
@@ -1914,9 +1914,9 @@ function renderHandel(f) {
       type:'line',
       data:{ labels,
         datasets:[
-          { label:'Marge CHF', data: margeCHF, yAxisID: 'y',
+          { label:t('lbl_marge_chf'), data: margeCHF, yAxisID: 'y',
             borderColor:'#67B9BC', backgroundColor:'rgba(103,185,188,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 },
-          { label:'Marge %', data: margePct, yAxisID: 'y1',
+          { label:t('lbl_marge_pct'), data: margePct, yAxisID: 'y1',
             borderColor:'#4A8E66', backgroundColor:'rgba(74,142,102,0.08)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2, borderDash:[5,3] }
         ] },
       options: {
@@ -2108,7 +2108,7 @@ function renderWash(f) {
   mkChart('washMonthlyChart', {
     type:'line',
     data:{ labels,
-      datasets:[{ label:'Umsatz CHF', data: valFn(f.wash,'Preis_CHF',periods),
+      datasets:[{ label:t('lbl_umsatz_chf'), data: valFn(f.wash,'Preis_CHF',periods),
         borderColor:'#9A9590', backgroundColor:'rgba(154,149,144,0.10)', fill:true, tension:0.35, pointRadius:pr, borderWidth:2 }] },
     options: baseOpts()
   });
@@ -2178,7 +2178,7 @@ function renderWash(f) {
   mkChart('washProgBarChart', {
     type:'bar',
     data:{ labels: progTop.map(e=>e[0]),
-      datasets:[{ label:'Umsatz CHF', data: progTop.map(e=>e[2]),
+      datasets:[{ label:t('lbl_umsatz_chf'), data: progTop.map(e=>e[2]),
         backgroundColor: progBarColors, borderRadius:5 }] },
     options:{ ...baseOpts(),
       onClick:(evt,elems) => { if(elems.length) setCF('Waschprogramm', progTop[elems[0].index][0]); },
@@ -2269,7 +2269,7 @@ function showBrandDrill(marke) {
   mkChart('brandDrillChart', {
     type:'bar',
     data:{ labels: modelTop.map(e=>e[0]),
-      datasets:[{ label:'Marge CHF', data: modelTop.map(e=>sumBy(e[1],'Marge_CHF')),
+      datasets:[{ label:t('lbl_marge_chf'), data: modelTop.map(e=>sumBy(e[1],'Marge_CHF')),
         backgroundColor: P_HANDEL.slice(0,modelTop.length), borderRadius:5 }] },
     options: baseOpts()
   });
@@ -2573,8 +2573,9 @@ function setLang(lang) {
     b.classList.toggle('active', b.textContent.trim() === lang.toUpperCase()));
   document.querySelectorAll('[data-t]').forEach(node => {
     const k = node.getAttribute('data-t');
-    if (TR[lang][k]) node.textContent = TR[lang][k];
+    if (TR[lang][k] !== undefined && !Array.isArray(TR[lang][k])) node.textContent = TR[lang][k];
   });
+  initFilters();
   render();
 }
 
