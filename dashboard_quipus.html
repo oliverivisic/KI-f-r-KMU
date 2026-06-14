@@ -777,6 +777,7 @@ const TR = {
     pct_marge:' % Marge en %',
     ft_refresh:'Temps réel',
     ft_refresh:'Echtzeit', waeschen:' Wäschen',
+    mon:['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],
   },
   fr: {
     subtitle:'Votre activité en un coup d\'œil',
@@ -812,6 +813,7 @@ const TR = {
     theme_dark:'🌙 Sombre', theme_light:'☀️ Clair',
     pct_marge:' % Marge',
     ft_refresh:'Echtzeit', waeschen:' Lavages',
+    mon:['Jan','Fév','Mar','Avr','Mai','Juin','Jul','Aoû','Sep','Oct','Nov','Déc'],
   },
   en: {
     subtitle:'Your business at a glance',
@@ -847,10 +849,11 @@ const TR = {
     theme_dark:'🌙 Dark', theme_light:'☀️ Light',
     pct_marge:' % Margin',
     ft_refresh:'Real-time', waeschen:' Washes',
+    mon:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
   }
 };
 
-function t(k) { return TR[S.lang][k] || k; }
+function t(k) { const v = TR[S.lang][k]; return v !== undefined ? v : k; }
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 const S = {
